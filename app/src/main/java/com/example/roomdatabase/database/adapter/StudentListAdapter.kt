@@ -13,8 +13,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class StudentListAdapter(private val studentList: ArrayList<SampleTable>,
-                         private val callback: (position: Int) -> Unit,
-                         private val callback2: (position: Int) -> Unit)
+                         private val callEdit: (position: Int) -> Unit,
+                         private val callDelete: (position: Int) -> Unit)
     : RecyclerView.Adapter<RecyclerView.ViewHolder>()  {
 
 
@@ -28,15 +28,18 @@ class StudentListAdapter(private val studentList: ArrayList<SampleTable>,
             holder.itemCellBinding.studentDetail = studentList[position]
             Glide.with(holder.itemCellBinding.ivUserImage).load(studentList[position].image).circleCrop().into(holder.itemCellBinding.ivUserImage)
 
-            holder.itemCellBinding.etDate.text =
+            holder.itemCellBinding.txtDate.text =
                 SimpleDateFormat("dd.MM.yyyy", Locale.US).format(Date(studentList[position].date))
 
 
-            holder.itemCellBinding.btnEditText.setOnClickListener {
-                callback(holder.adapterPosition)
+
+            holder.itemCellBinding.btnEdit.setOnClickListener {
+                callEdit(holder.adapterPosition)
             }
+
+
             holder.itemCellBinding.btnDelete.setOnClickListener {
-                callback2(holder.adapterPosition)
+                callDelete(studentList[holder.adapterPosition].id)
             }
 
 

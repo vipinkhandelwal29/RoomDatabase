@@ -1,10 +1,14 @@
 package com.example.roomdatabase
 
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.*
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.app.PendingIntent.getActivity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -14,17 +18,23 @@ import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
+import com.example.roomdatabase.databinding.DailogImagePickerBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.reflect.Array.get
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
+
 
 class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnClickListener {
 
     private var imageFilePath: String? = null
+    private var dataList = ArrayList<SampleTable>()
     private var id = 0
-    private var sampleTable: SampleTable? = null
     private var photo: String? = null
+    private var studentData: SampleTable? = null
 
     override fun getLayoutId() =
         R.layout.activity_form_detail
@@ -34,49 +44,95 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         val database = AppDatabase.getInstance(this)
         val sampleDao = database.sampleDao()
-
+        val cal = Calendar.getInstance()
         /* sampleDao.getData().forEach {
              sampleDao.getData().forEach {
                  Log.i("==>id: ${it.id}", "==>: ${it.name}")
              }*/
-        sampleTable = intent.getParcelableExtra("name")
+        studentData = intent.getParcelableExtra("data")
 
-        if (sampleTable != null) {
-            binding.etName.setText(sampleTable!!.name)
-            binding.etAddress.setText(sampleTable!!.address)
-            binding.tvDatePicker.setText(sampleTable!!.date.toString())
-            sampleTable!!.image
-            if (sampleTable!!.gender == "Male") binding.rbMale.isChecked =
-                true else if (sampleTable!!.gender == "Female") binding.rbFemale.isChecked =
-                true else null
-        }
+        if (null != studentData) {
+            binding.etName.setText(studentData!!.name)
+            binding.etAddress.setText(studentData!!.address)
+            binding.tvDatePicker.setText(studentData!!.date.toString())
 
-        val cal = Calendar.getInstance()
-        val dateSetListener =
-            DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
-                cal.set(Calendar.YEAR, year)
-                cal.set(Calendar.MONTH, monthOfYear)
-                cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            cal!!.timeInMillis = studentData!!.date
+            binding.tvDatePicker.setText(
+                SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
+            )
 
-                binding.tvDatePicker.text =
-                    SimpleDateFormat("dd.MM.yyyy", Locale.US).format(cal.time)
+
+            studentData = intent.getParcelableExtra("data")
+            if (null != studentData) {
+                photo = studentData!!.image
+                Glide.with(this)
+                    .load(photo)
+                    .circleCrop()
+                    .into(binding.ivUserImage)
             }
 
-        binding.tvDatePicker.setOnClickListener {
-            DatePickerDialog(
-                this, dateSetListener,
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
-            ).show()
+
+            if (studentData!!.gender == "Male") binding.rbMale.isChecked =
+                true else if (studentData!!.gender == "Female") binding.rbFemale.isChecked =
+                true else null
+
+            setTitle("Updated")
+
         }
 
+
+
+        binding.tvDatePicker.setOnClickListener {
+            val datePickerDialog = DatePickerDialog(
+                this,
+                DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
+                    cal!!.set(Calendar.YEAR, year)
+                    cal!!.set(Calendar.MONTH, monthOfYear)
+                    cal!!.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                    binding.tvDatePicker.setText(
+                        SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
+                    )
+
+                },
+                cal!!.get(Calendar.YEAR),
+                cal!!.get(Calendar.MONTH),
+                cal!!.get(Calendar.DAY_OF_MONTH)
+
+
+            )
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+            datePickerDialog.show()
+
+
+        }
+
+
+
+        //val sampleDao = AppDatabase.getInstance(this).sampleDao()
 
 
         binding.ivUserImage.setOnClickListener {
-            val permission = arrayOf(READ_EXTERNAL_STORAGE)
-            ActivityCompat.requestPermissions(this, permission, 101)
+            val dialog = BottomSheetDialog(this)
+            val dialogBinding = DailogImagePickerBinding.inflate(layoutInflater)
+            dialog.setContentView(dialogBinding.root)
+
+            dialogBinding.tvCamera.setOnClickListener {
+                dialog.dismiss()
+                val permission = arrayOf(CAMERA, WRITE_EXTERNAL_STORAGE)
+                ActivityCompat.requestPermissions(this, permission, 101)
+            }
+
+            dialogBinding.tvGallery.setOnClickListener {
+                dialog.dismiss()
+                val permission = arrayOf(READ_EXTERNAL_STORAGE)
+                ActivityCompat.requestPermissions(this, permission, 102)
+            }
+
+
+            dialog.show()
         }
+
+
 
         binding.btnSubmit.setOnClickListener {
             val name = binding.etName.text.toString()
@@ -99,13 +155,23 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             } else {
 
                 val data = SampleTable(
-                    id = id,
+                    id = if (studentData == null) 0 else studentData!!.id,
                     name = name,
                     gender = gender,
                     date = cal.timeInMillis,
                     address = address,
                     image = imageFilePath!!
                 )
+
+
+                /*sampleDao.insertData(data)
+                Toast.makeText(this, "Success", Toast.LENGTH_LONG).show()
+                binding.etName.text = null
+                binding.rgGender.clearCheck()
+                binding.tvDatePicker.text = null
+                binding.etAddress.text = null
+                finish()*/
+
 
                 setResult(Activity.RESULT_OK, intent)
                 finish()
@@ -119,6 +185,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 Toast.makeText(this, "$id: $name: $gender $date  $address", Toast.LENGTH_LONG)
                     .show()
                 val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("date", data)
                 startActivity(intent)
                 Log.d("result", "name: $name adr: $address gender: $gender  date: $date id :$id")
 
@@ -126,8 +193,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         }
         setSupportActionBar(binding.iToolbar.toolbar)
-
+        setTitle("Student Form")
     }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -143,8 +211,22 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 galleryIntent.type = "image/*"
                 startActivityForResult(galleryIntent, 201)
             }
-        } else
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        } else if (requestCode == 101) {
+            val status1 = grantResults[0] == PackageManager.PERMISSION_GRANTED
+            val status2 = grantResults[1] == PackageManager.PERMISSION_GRANTED
+            Log.d("==>status1", "==>$status1 status2:$status2")
+            if (status1 && status2) {
+                val cameraFile = File(
+                    Environment.getExternalStorageDirectory(),
+                    "camera_${System.currentTimeMillis()}.jpg"
+                )
+                val tempUri = Uri.fromFile(cameraFile)
+
+                val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, tempUri)
+                startActivityForResult(captureIntent, 203)
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -177,10 +259,6 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
 
-        if (id == R.id.action_search) {
-
-        }
-
         if (id == android.R.id.home) {
             onBackPressed()
             return true
@@ -200,4 +278,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         val format = SimpleDateFormat("dd/MM/yyy")
         return format.format(this)
     }
+
+
 }
+
