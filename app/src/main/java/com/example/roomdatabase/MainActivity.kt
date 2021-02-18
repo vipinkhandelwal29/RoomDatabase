@@ -13,6 +13,8 @@ import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.databinding.ActivityMainBinding
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
@@ -48,6 +50,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             startActivity(intent)
         }, callDelete = {id ->
             database.sampleDao().delete(id)
+
+
         })
 
         binding.recyclerview.adapter=adapter
@@ -75,7 +79,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             override fun onQueryTextChange(newText: String?): Boolean {
                 queryStr = newText
                 val result = database!!.sampleDao().search().filter {
-                    it.name.toLowerCase().contains((newText ?: "").toLowerCase())
+                it.name.toLowerCase(Locale.getDefault()).contains((newText ?: "").toLowerCase(Locale.getDefault()))
                 }
                 dataList.clear()
                 dataList.addAll(result)
@@ -91,7 +95,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
+        item.itemId
 
         if (item.itemId == android.R.id.home) {
             onBackPressed()
@@ -105,7 +109,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK && resultCode == 101) {
-            val updateData = data!!.getParcelableExtra<SampleTable>("name")
+            data!!.getParcelableExtra<SampleTable>("name")
         }
     }
 
