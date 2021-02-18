@@ -72,8 +72,9 @@
                 app:layout_constraintTop_toTopOf="@+id/txtGender">
 
                 <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
                     android:src="@drawable/ic_baseline_date_range_24" />
 
 
@@ -81,9 +82,8 @@
                     android:id="@+id/txtDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
+                    android:padding="4dp"
                     android:hint="DD-MM-YYYY"
-                    android:textColor="@color/black"
                     android:textColorHint="@color/black"
                     android:textSize="12sp" />
 
@@ -97,8 +97,8 @@
                 android:layout_marginEnd="16dp"
                 android:maxLines="1"
                 android:text="@{studentDetail.address}"
-                android:textColor="@color/black"
                 android:textSize="16sp"
+                android:ellipsize="end"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="@+id/txtName"
                 app:layout_constraintTop_toBottomOf="@+id/txtGender" />
@@ -106,7 +106,7 @@
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnEdit"
                 android:layout_width="0dp"
-                android:layout_height="45dp"
+                android:layout_height="40dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="10dp"
@@ -122,7 +122,7 @@
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnDelete"
                 android:layout_width="0dp"
-                android:layout_height="45dp"
+                android:layout_height="40dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="16dp"
                 android:background="@drawable/btn_shape"

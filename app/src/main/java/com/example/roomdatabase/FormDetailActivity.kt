@@ -3,7 +3,6 @@ package com.example.roomdatabase
 import android.Manifest.permission.*
 import android.app.Activity
 import android.app.DatePickerDialog
-import android.app.PendingIntent.getActivity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -14,15 +13,16 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
+import com.example.roomdatabase.databinding.DailogToastMsgBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.reflect.Array.get
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -36,8 +36,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private var photo: String? = null
     private var studentData: SampleTable? = null
 
-    override fun getLayoutId() =
-        R.layout.activity_form_detail
+    override fun getLayoutId() = R.layout.activity_form_detail
 
 
     override fun initControl() {
@@ -45,10 +44,18 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         val database = AppDatabase.getInstance(this)
         val sampleDao = database.sampleDao()
         val cal = Calendar.getInstance()
+
+        val dialog = BottomSheetDialog(this,R.style.NoWiredStrapInNavigationBar)
+        val dialogValidation = DailogToastMsgBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogValidation.root)
+
+
         /* sampleDao.getData().forEach {
              sampleDao.getData().forEach {
                  Log.i("==>id: ${it.id}", "==>: ${it.name}")
              }*/
+
+
         studentData = intent.getParcelableExtra("data")
 
         if (null != studentData) {
@@ -63,7 +70,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
 
             studentData = intent.getParcelableExtra("data")
-            if (null != studentData) {
+            if (studentData != null) {
                 photo = studentData!!.image
                 Glide.with(this)
                     .load(photo)
@@ -76,7 +83,8 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 true else if (studentData!!.gender == "Female") binding.rbFemale.isChecked =
                 true else null
 
-            setTitle("Updated")
+            setSupportActionBar(binding.iToolbar.toolbar)
+            setTitle("Student Update")
 
         }
 
@@ -89,9 +97,22 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                     cal!!.set(Calendar.YEAR, year)
                     cal!!.set(Calendar.MONTH, monthOfYear)
                     cal!!.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                    binding.tvDatePicker.setText(
-                        SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
-                    )
+                    val userAge = GregorianCalendar(year, monthOfYear, dayOfMonth)
+                    val minAdultAge = GregorianCalendar()
+                    minAdultAge.add(Calendar.YEAR, -18)
+                    minAdultAge.add(Calendar.MONTH, -1)
+                    if (minAdultAge.before(userAge)) {
+                        dialogValidation.tvMsg.text = "Your Age 18+ Required"
+                        dialogValidation.btnSubmit.setOnClickListener {
+                            dialog.dismiss()
+                        }
+                        dialog.show()
+                        // Toast.makeText(this, "Your Age 18+ Requerd", Toast.LENGTH_SHORT).show()
+                    } else {
+                        binding.tvDatePicker.setText(
+                            SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
+                        )
+                    }
 
                 },
                 cal!!.get(Calendar.YEAR),
@@ -107,22 +128,21 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         }
 
 
-
         //val sampleDao = AppDatabase.getInstance(this).sampleDao()
 
 
         binding.ivUserImage.setOnClickListener {
-            val dialog = BottomSheetDialog(this)
+            val dialog = BottomSheetDialog(this,R.style.NoWiredStrapInNavigationBar)
             val dialogBinding = DailogImagePickerBinding.inflate(layoutInflater)
             dialog.setContentView(dialogBinding.root)
 
-            dialogBinding.tvCamera.setOnClickListener {
+            dialogBinding.tvGallery.setOnClickListener {
                 dialog.dismiss()
                 val permission = arrayOf(CAMERA, WRITE_EXTERNAL_STORAGE)
                 ActivityCompat.requestPermissions(this, permission, 101)
             }
 
-            dialogBinding.tvGallery.setOnClickListener {
+            dialogBinding.tvCamera.setOnClickListener {
                 dialog.dismiss()
                 val permission = arrayOf(READ_EXTERNAL_STORAGE)
                 ActivityCompat.requestPermissions(this, permission, 102)
@@ -135,6 +155,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
 
         binding.btnSubmit.setOnClickListener {
+
             val name = binding.etName.text.toString()
             val date = binding.tvDatePicker.text.toString()
             val address = binding.etAddress.text.toString()
@@ -142,16 +163,44 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 if (binding.rbMale.isChecked) "Male"
                 else if (binding.rbFemale.isChecked) "Female" else null
 
-            if (name.isBlank()) {
-                Toast.makeText(this, "Please enter name", Toast.LENGTH_LONG).show()
+
+            if (imageFilePath == null) {
+                dialogValidation.tvMsg.text = "Please enter image"
+                dialogValidation.btnSubmit.setOnClickListener {
+                    dialog.dismiss()
+                }
+                dialog.show()
+
+
+            } else if (name.isBlank()) {
+                dialogValidation.tvMsg.text = "Please enter name"
+                dialogValidation.btnSubmit.setOnClickListener {
+                    dialog.dismiss()
+                }
+                dialog.show()
+
             } else if (gender.isNullOrBlank()) {
-                Toast.makeText(this, "Please enter gender", Toast.LENGTH_LONG).show()
+                dialogValidation.tvMsg.text = "Please enter gender"
+                dialogValidation.btnSubmit.setOnClickListener {
+                    dialog.dismiss()
+                }
+                dialog.show()
+
+
             } else if (date.isBlank()) {
-                Toast.makeText(this, "Please enter date", Toast.LENGTH_LONG).show()
+                dialogValidation.tvMsg.text = "Please enter date"
+                dialogValidation.btnSubmit.setOnClickListener {
+                    dialog.dismiss()
+                }
+                dialog.show()
+
             } else if (address.isBlank()) {
-                Toast.makeText(this, "Please enter address", Toast.LENGTH_LONG).show()
-            } else if (imageFilePath == null) {
-                Toast.makeText(this, "Please enter image", Toast.LENGTH_LONG).show()
+                dialogValidation.tvMsg.text = "Please enter address"
+                dialogValidation.btnSubmit.setOnClickListener {
+                    dialog.dismiss()
+                }
+                dialog.show()
+
             } else {
 
                 val data = SampleTable(
@@ -191,9 +240,11 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
             }
 
+
         }
+
         setSupportActionBar(binding.iToolbar.toolbar)
-        setTitle("Student Form")
+        setTitle("Add New Student")
     }
 
 
