@@ -1,6 +1,7 @@
 package com.example.roomdatabase
 
 import android.Manifest.permission.*
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -39,13 +40,14 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     override fun getLayoutId() = R.layout.activity_form_detail
 
 
+    @SuppressLint("SimpleDateFormat", "SetTextI18n")
     override fun initControl() {
 
         val database = AppDatabase.getInstance(this)
         val sampleDao = database.sampleDao()
         val cal = Calendar.getInstance()
 
-        val dialog = BottomSheetDialog(this,R.style.NoWiredStrapInNavigationBar)
+        val dialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
         val dialogValidation = DailogToastMsgBinding.inflate(layoutInflater)
         dialog.setContentView(dialogValidation.root)
 
@@ -63,24 +65,19 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             binding.etAddress.setText(studentData!!.address)
             binding.tvDatePicker.setText(studentData!!.date.toString())
 
-            cal!!.timeInMillis = studentData!!.date
+            cal.timeInMillis = studentData!!.date
             binding.tvDatePicker.setText(
-                SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
+                SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
             )
-
-
-            studentData = intent.getParcelableExtra("data")
-            if (studentData != null) {
-                photo = studentData!!.image
-                Glide.with(this)
-                    .load(photo)
-                    .circleCrop()
-                    .into(binding.ivUserImage)
-            }
-
+            photo = studentData!!.image
+            Glide.with(this)
+                .load(photo)
+                .circleCrop()
+                .into(binding.ivUserImage)
 
             if (studentData!!.gender == "Male") binding.rbMale.isChecked =
-                true else if (studentData!!.gender == "Female") binding.rbFemale.isChecked =
+                true else if (studentData!!.gender == "Female")
+                binding.rbFemale.isChecked =
                 true else null
 
             setSupportActionBar(binding.iToolbar.toolbar)
@@ -94,9 +91,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             val datePickerDialog = DatePickerDialog(
                 this,
                 DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
-                    cal!!.set(Calendar.YEAR, year)
-                    cal!!.set(Calendar.MONTH, monthOfYear)
-                    cal!!.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                    cal.set(Calendar.YEAR, year)
+                    cal.set(Calendar.MONTH, monthOfYear)
+                    cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
                     val userAge = GregorianCalendar(year, monthOfYear, dayOfMonth)
                     val minAdultAge = GregorianCalendar()
                     minAdultAge.add(Calendar.YEAR, -18)
@@ -110,14 +107,14 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                         // Toast.makeText(this, "Your Age 18+ Requerd", Toast.LENGTH_SHORT).show()
                     } else {
                         binding.tvDatePicker.setText(
-                            SimpleDateFormat("dd MMM, yyyy").format(Date(cal!!.timeInMillis))
+                            SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
                         )
                     }
 
                 },
-                cal!!.get(Calendar.YEAR),
-                cal!!.get(Calendar.MONTH),
-                cal!!.get(Calendar.DAY_OF_MONTH)
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
 
 
             )
@@ -132,7 +129,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
 
         binding.ivUserImage.setOnClickListener {
-            val dialog = BottomSheetDialog(this,R.style.NoWiredStrapInNavigationBar)
+            val dialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
             val dialogBinding = DailogImagePickerBinding.inflate(layoutInflater)
             dialog.setContentView(dialogBinding.root)
 

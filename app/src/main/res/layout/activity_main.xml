@@ -32,6 +32,8 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:listitem="@layout/recyclerview_item" />
 
+
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"

@@ -2,12 +2,9 @@ package com.example.roomdatabase
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Color
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.ImageView
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,16 +12,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
-import com.example.roomdatabase.database.util.timeStampToDate
 import com.example.roomdatabase.databinding.ActivityMainBinding
-import java.util.*
-import kotlin.collections.ArrayList
+import java.lang.Thread.sleep
+import kotlin.concurrent.thread
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     var adapter: StudentListAdapter? = null
     private var itemSearch: MenuItem? = null
-    val dataList = ArrayList<SampleTable>()
+    val dataList = ArrayList<SampleTable?>()
     private lateinit var database: AppDatabase
     private var queryStr: String? = null
 
@@ -53,7 +49,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             intent.putExtra("data", dataList[position])
             startActivity(intent)
         }, callDelete = {
-            database.sampleDao().delete(dataList[it].id)
+            database.sampleDao().delete(dataList[it]!!.id)
             dataList.removeAt(it)
             adapter?.notifyDataSetChanged()
 
@@ -61,6 +57,66 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         })
 
         binding.recyclerview.adapter = adapter
+        var isProgressBar = false
+
+
+
+
+        binding.recyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val postion = manager.findLastVisibleItemPosition()
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (postion == dataList.size - 1 && !isProgressBar) {
+                    dataList.add(null)
+                    isProgressBar = true
+                    adapter!!.notifyItemInserted(dataList.size - 1)
+                    Thread {
+
+                        sleep(2000)
+                        dataList.remove(null)
+                        dataList.addAll(dataList)
+                        runOnUiThread {
+                            adapter!!.notifyDataSetChanged()
+                            isProgressBar = false
+                        }
+                        /*for (i in 0..10) {
+                            if (dataList.size < 10) {
+                            dataList.addAll(dataList)
+                            runOnUiThread { adapter!!.notifyDataSetChanged() }
+                        }else {
+                                dataList.addAll(dataList)
+                            }
+                    }*/
+
+
+                    }.start()
+                }
+            }
+
+            /*if (position == dataStudentList.size - 1 && !progressAdd) {
+                dataStudentList.add(null)
+                adapter!!.notifyItemInserted(dataStudentList.size - 1)
+                progressAdd = true
+                Thread {
+                    sleep(5000)
+                    dataStudentList.remove(null)
+                    if (dataStudentList.size >10)
+                        dataStudentList.addAll(dataStudentList.subList(0,10))
+                    else
+                        dataStudentList.addAll(dataStudentList)
+                    runOnUiThread { adapter!!.notifyDataSetChanged()
+                    }
+                    progressAdd = false
+                }.start()
+            }*/
+
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+
+            }
+        })
 
 
         binding.fab.setOnClickListener {
@@ -77,10 +133,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         menuInflater.inflate(R.menu.menu, menu)
         itemSearch = menu!!.findItem(R.id.action_search)
         val searchView = itemSearch!!.actionView as SearchView
-//        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn).setColorFilter(Color.WHITE)
-//        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_go_btn).setColorFilter(Color.WHITE)
-//        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon).setColorFilter(Color.WHITE)
-//        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_button).setColorFilter(Color.WHITE)
+/*        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn).setColorFilter(Color.WHITE)
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_go_btn).setColorFilter(Color.WHITE)
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon).setColorFilter(Color.WHITE)
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_button).setColorFilter(Color.WHITE)*/
         searchView.apply {
             searchView.setQueryHint("Search")
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -112,13 +168,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
 
-
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         item.itemId
 
         if (item.itemId == android.R.id.home) {
             onBackPressed()
+            finish()
             return true
         } else {
             super.onOptionsItemSelected(item)
