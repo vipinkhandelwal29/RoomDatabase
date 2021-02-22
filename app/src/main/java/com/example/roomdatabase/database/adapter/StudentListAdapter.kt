@@ -4,7 +4,7 @@ import android.app.Activity
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.roomdatabase.database.bean.SampleTable
+import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ProgressBarBinding
 import com.example.roomdatabase.databinding.RecyclerviewItemBinding
 import java.text.SimpleDateFormat
@@ -12,7 +12,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class StudentListAdapter(
-    private val studentList: ArrayList<SampleTable?>,
+    private val studentList: ArrayList<StudentTable?>,
     private val callEdit: (position: Int) -> Unit,
     private val callDelete: (position: Int) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -44,7 +44,7 @@ class StudentListAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is StudentListHolder) {
 
-            holder.itemCellBinding.studentDetail = studentList[position]
+            holder.itemCellBinding.studentDetail = this.studentList[position]
             Glide.with(holder.itemCellBinding.ivUserImage).load(studentList[position]!!.image)
                 .circleCrop().into(holder.itemCellBinding.ivUserImage)
 

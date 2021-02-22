@@ -14,10 +14,10 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.bean.SampleTable
+import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
 import com.example.roomdatabase.databinding.DailogToastMsgBinding
@@ -43,8 +43,10 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     @SuppressLint("SimpleDateFormat", "SetTextI18n")
     override fun initControl() {
 
+        initData()
+
         val database = AppDatabase.getInstance(this)
-        val sampleDao = database.sampleDao()
+        //val sampleDao = database.sampleDao()
         val cal = Calendar.getInstance()
 
         val dialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
@@ -78,7 +80,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             if (studentData!!.gender == "Male") binding.rbMale.isChecked =
                 true else if (studentData!!.gender == "Female")
                 binding.rbFemale.isChecked =
-                true else null
+                    true else null
 
             setSupportActionBar(binding.iToolbar.toolbar)
             setTitle("Student Update")
@@ -200,13 +202,22 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
             } else {
 
-                val data = SampleTable(
-                    id = if (studentData == null) 0 else studentData!!.id,
+                val dataF = StudentTable(
+                    id = (if (id == 0 ) (System.currentTimeMillis()) else id.toLong())/*if (studentData == null) 0 else studentData!!.id*/,
                     name = name,
                     gender = gender,
                     date = cal.timeInMillis,
                     address = address,
                     image = imageFilePath!!
+
+
+              /*  val data = SampleTable(
+                    id = (if (id == 0 ) (System.currentTimeMillis().toInt()) else id.toLong().toInt())if (studentData == null) 0 else studentData!!.id,
+                    name = name,
+                    gender = gender,
+                    date = cal.timeInMillis,
+                    address = address,
+                    image = imageFilePath!!*/
                 )
 
 
@@ -218,6 +229,19 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 binding.etAddress.text = null
                 finish()*/
 
+                myRef.push().setValue(dataF)
+
+
+
+                //dbReference.child("users").child(userId).setValue(user)
+                /*myRef.child("name").setValue(name)
+                myRef.child("address").setValue(address)
+                //addUserChangeListener()
+                myRef.push().setValue(if (id==0) {
+                    (System.currentTimeMillis().toString())
+                }else {}*/
+
+
 
                 setResult(Activity.RESULT_OK, intent)
                 finish()
@@ -227,13 +251,13 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 binding.rbFemale.text = null
                 binding.tvDatePicker.text = null
 
-                val id = sampleDao.insertData(data)
+              /*  val id = sampleDao.insertData(data)
                 Toast.makeText(this, "$id: $name: $gender $date  $address", Toast.LENGTH_LONG)
                     .show()
                 val intent = Intent(this, MainActivity::class.java)
                 intent.putExtra("date", data)
                 startActivity(intent)
-                Log.d("result", "name: $name adr: $address gender: $gender  date: $date id :$id")
+                Log.d("result", "name: $name adr: $address gender: $gender  date: $date id :$id")*/
 
             }
 
@@ -327,6 +351,35 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         return format.format(this)
     }
 
+    /*private fun addUserChangeListener() {
+        // User data change listener
+        myRef.child("students").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val user = dataSnapshot.getValue(SampleTable::class.java)
 
+                // Check for null
+                if (user == null) {
+                    return
+                }
+
+
+
+
+                // Display newly updated name and email
+                binding.etName.setText(user?.name).toString()
+                binding.etAddress.setText(user?.name).toString()
+                //binding.gr.setText(user?.name).toString()
+                // clear edit text erNameEt.setText("")
+                //userMobileEt.setText("")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Failed to read value
+            }
+        })
+    }*/
 }
+
+
+
 

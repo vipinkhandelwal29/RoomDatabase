@@ -6,50 +6,75 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
+import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityMainBinding
 import java.lang.Thread.sleep
-import kotlin.concurrent.thread
+import kotlin.math.log
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     var adapter: StudentListAdapter? = null
     private var itemSearch: MenuItem? = null
-    val dataList = ArrayList<SampleTable?>()
+    val dataList = ArrayList<StudentTable?>()
+
+    //val valueList = ArrayList<StudentTable>()
     private lateinit var database: AppDatabase
     private var queryStr: String? = null
 
 
     override fun getLayoutId() = R.layout.activity_main
+
     override fun initControl() {
 
 
-        /*val rv = findViewById<View>(R.id.recyclerview) as RecyclerView
-        rv.layoutManager = LinearLayoutManager(this)*/
+
+        initData()
+        myRef.get().addOnCompleteListener {
+            val result = it.result
+            // if (result!=null && result.childrenCount > 0){
+            result!!.children.forEach {
+                Log.d("==>", "msg ${it.child("name").value}")
+                dataList.add(
+                    StudentTable(
+                        id = it.child("id").value.toString().toLong(),
+                        name = it.child("name").value.toString(),
+                        address = it.child("address").value.toString(),
+                        image = it.child("image").value.toString(),
+                        date = it.child("date").value.toString().toLong(),
+                        gender = it.child("gender").value.toString()
+                    )
+                )
+            }
+
+            adapter!!.notifyDataSetChanged()
+        }
+
 
         val manager = LinearLayoutManager(this)
         binding.recyclerview.layoutManager = manager
 
-        database = AppDatabase.getInstance(this)
+       /* database = AppDatabase.getInstance(this)
         val studentLiveData = database.sampleDao().getData()
-
         studentLiveData.observe(this, Observer {
             dataList.clear()
             dataList.addAll(it)
             adapter?.notifyDataSetChanged()
-        })
+        })*/
 
         adapter = StudentListAdapter(dataList, callEdit = { position ->
             val intent = Intent(this, FormDetailActivity::class.java)
-            intent.putExtra("data", dataList[position])
+            //intent.putExtra("data", dataList[position])
             startActivity(intent)
         }, callDelete = {
-            database.sampleDao().delete(dataList[it]!!.id)
+            myRef.child(dataList[it]!!.id.toString()).removeValue(){ error, ref ->
+                Log.d("==>", "${error}")
+            }
+           // database.sampleDao().delete(dataList[it]!!.id)
             dataList.removeAt(it)
             adapter?.notifyDataSetChanged()
 
@@ -61,7 +86,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
 
 
-
+/*
         binding.recyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 val postion = manager.findLastVisibleItemPosition()
@@ -80,43 +105,26 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                             adapter!!.notifyDataSetChanged()
                             isProgressBar = false
                         }
-                        /*for (i in 0..10) {
+                        for (i in 0..10) {
                             if (dataList.size < 10) {
                             dataList.addAll(dataList)
                             runOnUiThread { adapter!!.notifyDataSetChanged() }
                         }else {
                                 dataList.addAll(dataList)
                             }
-                    }*/
+                    }
 
 
                     }.start()
                 }
             }
 
-            /*if (position == dataStudentList.size - 1 && !progressAdd) {
-                dataStudentList.add(null)
-                adapter!!.notifyItemInserted(dataStudentList.size - 1)
-                progressAdd = true
-                Thread {
-                    sleep(5000)
-                    dataStudentList.remove(null)
-                    if (dataStudentList.size >10)
-                        dataStudentList.addAll(dataStudentList.subList(0,10))
-                    else
-                        dataStudentList.addAll(dataStudentList)
-                    runOnUiThread { adapter!!.notifyDataSetChanged()
-                    }
-                    progressAdd = false
-                }.start()
-            }*/
-
 
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
 
             }
-        })
+        })*/
 
 
         binding.fab.setOnClickListener {
@@ -137,6 +145,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_go_btn).setColorFilter(Color.WHITE)
         searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon).setColorFilter(Color.WHITE)
         searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_button).setColorFilter(Color.WHITE)*/
+
+
+
         searchView.apply {
             searchView.setQueryHint("Search")
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -155,7 +166,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                         // it.date >= calendar.timeInMillis
                     }
                     dataList.clear()
-                    dataList.addAll(result)
+                    // dataList.addAll(result)
                     adapter!!.notifyDataSetChanged()
                     return true
                 }
@@ -190,3 +201,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
 
 }
+
+/*
+private fun fromJson(data: String): SerializedBean {
+    return Gson().fromJson(data, SerializedBean::class.java)
+}
+
+
+   private fun toGson(data: String): String {
+        return Gson().toJson(data)
+    }*/
+

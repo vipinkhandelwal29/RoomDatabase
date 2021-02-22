@@ -16,7 +16,7 @@ interface SampleDao {
     fun  getData(): LiveData<List<SampleTable>>
 
     @Query("DELETE FROM word_table where id= :id")
-    fun delete(id: Int)
+    fun delete(id: Long)
 
     @Query("select * from word_table")
     fun search():List<SampleTable>

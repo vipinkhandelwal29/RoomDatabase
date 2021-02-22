@@ -2,12 +2,9 @@ package com.example.roomdatabase.database.bean
 
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.databinding.adapters.Converters
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-import java.time.LocalDate
 
 @Entity(tableName = "word_table")
 data class SampleTable(

@@ -5,6 +5,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import com.example.roomdatabase.database.bean.SampleTable
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 
 abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
     protected lateinit var binding: T
@@ -16,6 +19,14 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, getLayoutId())
         initControl()
     }
+
+    protected lateinit var myRef: DatabaseReference
+
+    protected fun initData()
+    {
+        myRef = Firebase.database.getReference("students table")
+    }
+
 
 
 }

@@ -8,7 +8,7 @@
 
         <variable
             name="studentDetail"
-            type="com.example.roomdatabase.database.bean.SampleTable" />
+            type="com.example.roomdatabase.database.bean.StudentTable" />
     </data>
 
 
