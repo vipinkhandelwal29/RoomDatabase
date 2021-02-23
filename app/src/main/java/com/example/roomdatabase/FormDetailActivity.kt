@@ -12,8 +12,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.bean.SampleTable
@@ -22,6 +22,8 @@ import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
 import com.example.roomdatabase.databinding.DailogToastMsgBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -36,6 +38,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private var id = 0
     private var photo: String? = null
     private var studentData: SampleTable? = null
+
 
     override fun getLayoutId() = R.layout.activity_form_detail
 
@@ -59,6 +62,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                  Log.i("==>id: ${it.id}", "==>: ${it.name}")
              }*/
 
+        mStorageRef = FirebaseStorage.getInstance().getReference()
 
         studentData = intent.getParcelableExtra("data")
 
@@ -82,6 +86,15 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 binding.rbFemale.isChecked =
                     true else null
 
+
+          /* val mfile = Uri.fromFile()
+            val ref: StorageReference = mStorageRef!!.child()
+            ref.putFile(mfile).addOnSuccessListener { task ->
+                Log.d("==>", "initControl: $task ")
+            }
+*/
+
+            Glide.with(this)
             setSupportActionBar(binding.iToolbar.toolbar)
             setTitle("Student Update")
 
@@ -163,6 +176,28 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 else if (binding.rbFemale.isChecked) "Female" else null
 
 
+            val ref = mStorageRef!!.child("images/mountains.jpg")
+            val uploadTask = ref.putFile(imageFilePath!!.toUri())
+
+            val urlTask = uploadTask.continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let {
+                        throw it
+                    }
+                }
+                ref.downloadUrl
+            }.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result
+
+
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+
+
             if (imageFilePath == null) {
                 dialogValidation.tvMsg.text = "Please enter image"
                 dialogValidation.btnSubmit.setOnClickListener {
@@ -203,7 +238,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             } else {
 
                 val dataF = StudentTable(
-                    id = (if (id == 0 ) (System.currentTimeMillis()) else id.toLong())/*if (studentData == null) 0 else studentData!!.id*/,
+                    id = (if (id == 0) (System.currentTimeMillis()) else id.toLong())/*if (studentData == null) 0 else studentData!!.id*/,
                     name = name,
                     gender = gender,
                     date = cal.timeInMillis,
@@ -211,7 +246,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                     image = imageFilePath!!
 
 
-              /*  val data = SampleTable(
+                    /*  val data = SampleTable(
                     id = (if (id == 0 ) (System.currentTimeMillis().toInt()) else id.toLong().toInt())if (studentData == null) 0 else studentData!!.id,
                     name = name,
                     gender = gender,

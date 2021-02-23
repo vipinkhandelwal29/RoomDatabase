@@ -13,6 +13,7 @@ import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityMainBinding
+import com.google.firebase.storage.FirebaseStorage
 import java.lang.Thread.sleep
 import kotlin.math.log
 
@@ -53,6 +54,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
             adapter!!.notifyDataSetChanged()
         }
+        mStorageRef = FirebaseStorage.getInstance().getReference("https://console.firebase.google.com/project/room-database-3a0cc/storage/room-database-3a0cc.appspot.com/files");
+
+
+
+
 
 
         val manager = LinearLayoutManager(this)

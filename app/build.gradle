@@ -42,6 +42,7 @@ android {
 dependencies {
 
 
+
     def room_version = "2.2.6"
 
     implementation "androidx.room:room-runtime:$room_version"
@@ -57,5 +58,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-livedata:2.0.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.google.firebase:firebase-database-ktx:19.6.0'
+    implementation 'com.google.firebase:firebase-storage:19.1.1'
+    implementation platform('com.google.firebase:firebase-bom:26.5.0')
 
 }
