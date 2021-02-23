@@ -4,9 +4,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import com.example.roomdatabase.databinding.DailogToastMsgBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
@@ -22,17 +23,27 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         initControl()
     }
 
-    protected lateinit var myRef: DatabaseReference
-
-    protected  var mStorageRef: StorageReference? = null
-
-
-    protected fun initData()
-    {
-        myRef = Firebase.database.getReference("students table")
-       // mStorageRef = FirebaseStorage.getInstance().getReference("https://console.firebase.google.com/project/room-database-3a0cc/storage/room-database-3a0cc.appspot.com/files");
+    protected lateinit var databaseReference: DatabaseReference
+    protected fun initFirebaseDatabase() {
+        databaseReference = FirebaseDatabase.getInstance().getReference("student")
     }
 
+    protected lateinit var storageReference: StorageReference
+    protected fun initFirebaseStorage() {
+        storageReference = FirebaseStorage.getInstance()
+            .getReferenceFromUrl("gs://roomdatabase-eb297.appspot.com");
+    }
+
+    protected fun messageShow(Message: String) {
+        val dialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+        val dialogValidation = DailogToastMsgBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogValidation.root)
+        dialogValidation.tvMsg.text = ""
+        dialogValidation.btnSubmit.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
+    }
 
 
 }

@@ -1,33 +1,42 @@
 {
   "project_info": {
-    "project_number": "594954511154",
-    "project_id": "room-database-3a0cc",
-    "storage_bucket": "room-database-3a0cc.appspot.com"
+    "project_number": "1038714030489",
+    "firebase_url": "https://roomdatabase-eb297-default-rtdb.firebaseio.com",
+    "project_id": "roomdatabase-eb297",
+    "storage_bucket": "roomdatabase-eb297.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:594954511154:android:c9cdeb3350a25fdeba6d2b",
+        "mobilesdk_app_id": "1:1038714030489:android:e50b89aea0bc620783eb08",
         "android_client_info": {
           "package_name": "com.example.roomdatabase"
         }
       },
       "oauth_client": [
         {
-          "client_id": "594954511154-go312dmh3kdvhveudfc6vifskt58otjf.apps.googleusercontent.com",
+          "client_id": "1038714030489-lp99qrar8motvu3qi3dq06mge0tklfv3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.roomdatabase",
+            "certificate_hash": "15aa2cc8859b11ed140af5cdeae6f6b5881931cd"
+          }
+        },
+        {
+          "client_id": "1038714030489-t5kv1esct3fl04du5ioo4vg8bh32od4s.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDo57hEKgxhZZOwL0mdmehbB9oBjmO9SJ0"
+          "current_key": "AIzaSyDyD31MdUQY93BFp1Y-AfMddDJFXid-uSc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "594954511154-go312dmh3kdvhveudfc6vifskt58otjf.apps.googleusercontent.com",
+              "client_id": "1038714030489-t5kv1esct3fl04du5ioo4vg8bh32od4s.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -14,6 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RoomDatabase">
         <activity android:name=".FormDetailActivity" />
+        <activity android:name=".EditFormAcivity"/>
         <activity
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustNothing">

@@ -1,6 +1,6 @@
 package com.example.roomdatabase
 
-import android.Manifest.permission.*
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
@@ -10,8 +10,6 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.view.MenuItem
-import android.view.View
 import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.bean.StudentTable
@@ -23,29 +21,47 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
-
-class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnClickListener {
-
-    private var tempFile: File? = null
-    private var dataList = ArrayList<StudentTable>()
-    private var photo: String? = null
-
-
+class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
     override fun getLayoutId() = R.layout.activity_form_detail
 
+    private lateinit var studentData: StudentTable
+    private var photo: String? = null
+    private var tempFile: File? = null
 
-    @SuppressLint("SimpleDateFormat", "SetTextI18n")
+    @SuppressLint("SimpleDateFormat")
     override fun initControl() {
 
 
-
         setSupportActionBar(binding.iToolbar.toolbar)
-        setTitle("Add New Student")
-
+        setTitle("Student Update")
 
         val cal = Calendar.getInstance()
+
+        studentData = intent.getParcelableExtra("data")!!
+
+
+        binding.etName.setText(studentData.name)
+        binding.etAddress.setText(studentData.address)
+        binding.tvDatePicker.setText(studentData.dob.toString())
+
+        cal.timeInMillis = studentData.dob
+        binding.tvDatePicker.setText(
+            SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
+        )
+        photo = studentData.image
+        Glide.with(this)
+            .load(photo)
+            .circleCrop()
+            .into(binding.ivUserImage)
+
+        if (studentData.gender == "Male") binding.rbMale.isChecked =
+            true else if (studentData.gender == "Female")
+            binding.rbFemale.isChecked =
+                true
+
+        Glide.with(this)
+
         binding.tvDatePicker.setOnClickListener {
             val datePickerDialog = DatePickerDialog(
                 this,
@@ -85,13 +101,16 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
             dialogBinding.tvGallery.setOnClickListener {
                 dialog.dismiss()
-                val permission = arrayOf(CAMERA, WRITE_EXTERNAL_STORAGE)
+                val permission = arrayOf(
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
                 ActivityCompat.requestPermissions(this, permission, 101)
             }
 
             dialogBinding.tvCamera.setOnClickListener {
                 dialog.dismiss()
-                val permission = arrayOf(READ_EXTERNAL_STORAGE)
+                val permission = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
                 ActivityCompat.requestPermissions(this, permission, 102)
             }
 
@@ -119,46 +138,49 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             } else if (date.isBlank()) {
                 messageShow("please enter your date")
             } else {
-                initFirebaseStorage()
-                uploadImage {
+                if (tempFile != null) {
+                    initFirebaseStorage()
+                    uploadImage {
+                        val dataF = StudentTable(
+                            id = studentData.id,
+                            name = name,
+                            gender = gender,
+                            dob = cal.timeInMillis,
+                            address = address,
+                            image = it
+                        )
+                        initFirebaseDatabase()
+                        databaseReference.child(dataF.id.toString()).setValue(dataF)
+                            .addOnCompleteListener {
+                                finish()
+                            }.addOnFailureListener {
+                                messageShow(it.localizedMessage)
+                            }
+                    }
+                } else {
+                    initFirebaseDatabase()
                     val dataF = StudentTable(
-                        id = System.currentTimeMillis(),
+                        id = studentData.id,
                         name = name,
                         gender = gender,
                         dob = cal.timeInMillis,
                         address = address,
-                        image = it
+                        image = studentData.image
                     )
-                    initFirebaseDatabase()
-                    databaseReference.child(dataF.id.toString()).setValue(dataF).addOnCompleteListener {
-                        finish()
-                    }.addOnFailureListener {
-                        messageShow(it.localizedMessage)
-                    }
+                    databaseReference.child(dataF.id.toString()).setValue(dataF)
+                        .addOnCompleteListener {
+                            finish()
+                        }.addOnFailureListener {
+                            messageShow(it.localizedMessage)
+                        }
                 }
-
-                setResult(Activity.RESULT_OK, intent)
-                finish()
-                binding.etName.text = null
-                binding.etAddress.text = null
-                binding.rbMale.text = null
-                binding.rbFemale.text = null
-                binding.tvDatePicker.text = null
-
-                /*val id = sampleDao.insertData(data)
-                Toast.makeText(this, "$id: $name: $gender $date  $address", Toast.LENGTH_LONG)
-                    .show()*//*
-                  val intent = Intent(this, MainActivity::class.java)
-                  intent.putExtra("date", data)
-                  startActivity(intent)
-                  Log.d("result", "name: $name adr: $address gender: $gender  date: $date id :$id")*/
-
             }
         }
+
     }
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
-        val ref = storageReference!!.child("student/${tempFile!!.name}")
+        val ref = storageReference.child("student/${tempFile!!.name}")
         val uploadTask = ref.putStream(FileInputStream(tempFile))
         val urlTask = uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
@@ -181,7 +203,6 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         }
     }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -242,53 +263,4 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     }
 
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-
-        if (id == android.R.id.home) {
-            onBackPressed()
-            return true
-            /*  Toast.makeText(this, "ActionClicked", Toast.LENGTH_LONG).show()
-              Log.d("btn", "menuBtnAdd  ")*/
-        } else {
-
-            return super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onClick(v: View?) {
-        TODO("Not yet implemented")
-    }
-
-    /*private fun addUserChangeListener() {
-        // User data change listener
-        myRef.child("students").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val user = dataSnapshot.getValue(SampleTable::class.java)
-
-                // Check for null
-                if (user == null) {
-                    return
-                }
-
-
-
-
-                // Display newly updated name and email
-                binding.etName.setText(user?.name).toString()
-                binding.etAddress.setText(user?.name).toString()
-                //binding.gr.setText(user?.name).toString()
-                // clear edit text erNameEt.setText("")
-                //userMobileEt.setText("")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Failed to read value
-            }
-        })
-    }*/
 }
-
-
-
-

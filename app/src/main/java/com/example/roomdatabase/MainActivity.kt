@@ -5,17 +5,17 @@ import android.content.Intent
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityMainBinding
-import com.google.firebase.storage.FirebaseStorage
-import java.lang.Thread.sleep
-import kotlin.math.log
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
@@ -32,64 +32,30 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     override fun initControl() {
 
+        setSupportActionBar(binding.iToolbar.toolbar)
+        setTitle("Student List")
 
+        initFirebaseDatabase()
 
-        initData()
-        myRef.get().addOnCompleteListener {
-            val result = it.result
-            // if (result!=null && result.childrenCount > 0){
-            result!!.children.forEach {
-                Log.d("==>", "msg ${it.child("name").value}")
-                dataList.add(
-                    StudentTable(
-                        id = it.child("id").value.toString().toLong(),
-                        name = it.child("name").value.toString(),
-                        address = it.child("address").value.toString(),
-                        image = it.child("image").value.toString(),
-                        date = it.child("date").value.toString().toLong(),
-                        gender = it.child("gender").value.toString()
-                    )
-                )
-            }
-
-            adapter!!.notifyDataSetChanged()
-        }
-        mStorageRef = FirebaseStorage.getInstance().getReference("https://console.firebase.google.com/project/room-database-3a0cc/storage/room-database-3a0cc.appspot.com/files");
-
-
-
-
-
-
+        getFirebaseData()
         val manager = LinearLayoutManager(this)
         binding.recyclerview.layoutManager = manager
 
-       /* database = AppDatabase.getInstance(this)
-        val studentLiveData = database.sampleDao().getData()
-        studentLiveData.observe(this, Observer {
-            dataList.clear()
-            dataList.addAll(it)
-            adapter?.notifyDataSetChanged()
-        })*/
 
         adapter = StudentListAdapter(dataList, callEdit = { position ->
-            val intent = Intent(this, FormDetailActivity::class.java)
-            //intent.putExtra("data", dataList[position])
+            val intent = Intent(this, EditFormAcivity::class.java)
+            intent.putExtra("data", dataList[position])
             startActivity(intent)
         }, callDelete = {
-            myRef.child(dataList[it]!!.id.toString()).removeValue(){ error, ref ->
-                Log.d("==>", "${error}")
-            }
-           // database.sampleDao().delete(dataList[it]!!.id)
+            databaseReference.child(dataList[it]!!.id.toString()).removeValue()
+            // database.sampleDao().delete(dataList[it]!!.id)
             dataList.removeAt(it)
             adapter?.notifyDataSetChanged()
-
 
         })
 
         binding.recyclerview.adapter = adapter
         var isProgressBar = false
-
 
 
 /*
@@ -138,83 +104,140 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             startActivity(intent)
 
         }
-        setSupportActionBar(binding.iToolbar.toolbar)
-        setTitle("Student List")
+
+
+
+}
+
+private fun getFirebaseData() {
+
+    databaseReference.get().addOnCompleteListener {
+        val result = it.result
+        // if (result!=null && result.childrenCount > 0){
+        dataList.clear()
+        result!!.children.forEach {
+            Log.d("==>", "msg ${it.child("name").value}")
+            dataList.add(
+                StudentTable(
+                    id = it.child("id").value.toString().toLong(),
+                    name = it.child("name").value.toString(),
+                    address = it.child("address").value.toString(),
+                    image = it.child("image").value.toString(),
+                    dob = it.child("dob").value.toString().toLong(),
+                    gender = it.child("gender").value.toString()
+                )
+            )
+        }
+        adapter!!.notifyDataSetChanged()
+        setFirebaseEvent()
 
     }
+}
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
-        itemSearch = menu!!.findItem(R.id.action_search)
-        val searchView = itemSearch!!.actionView as SearchView
-/*        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn).setColorFilter(Color.WHITE)
-        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_go_btn).setColorFilter(Color.WHITE)
-        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon).setColorFilter(Color.WHITE)
-        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_button).setColorFilter(Color.WHITE)*/
+private fun setFirebaseEvent() {
+    databaseReference.addChildEventListener(object : ChildEventListener {
+        override fun onCancelled(error: DatabaseError) {}
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            Log.d("onChildChanged", "onChildChanged: ${snapshot}")
+        }
 
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            Log.d("onChildAdded", "onChildAdded: ${snapshot}")
+        }
 
+        override fun onChildRemoved(snapshot: DataSnapshot) {
 
-        searchView.apply {
-            searchView.setQueryHint("Search")
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    queryStr = newText
-                    //val calendar = Calendar.getInstance()
-                    //calendar.add(Calendar.YEAR, -18)
-                    //Log.d("==>", "==>${timeStampToDate(calendar.timeInMillis)}")
-                    val result = database.sampleDao().search().filter {
-                        //it.name.toUpperCase().contains((newText ?: " "))
-                        it.name.toLowerCase().contains((newText ?: ""))
-                        // it.date >= calendar.timeInMillis
-                    }
-                    dataList.clear()
-                    // dataList.addAll(result)
-                    adapter!!.notifyDataSetChanged()
-                    return true
-                }
-
-            })
 
         }
+    })
+}
+
+override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.menu, menu)
+    itemSearch = menu!!.findItem(R.id.action_search)
+    val searchView = itemSearch!!.actionView as SearchView
+    searchView.apply {
+        searchView.setQueryHint("Search")
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                queryStr = newText
+                val result = database.sampleDao().search().filter {
+                    //it.name.toUpperCase().contains((newText ?: " "))
+                    it.name.toLowerCase().contains((newText ?: ""))
+                    // it.date >= calendar.timeInMillis
+                }
+                dataList.clear()
+                // dataList.addAll(result)
+                adapter!!.notifyDataSetChanged()
+                return true
+            }
+
+        })
+
+    }
+    return true
+}
+
+
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    item.itemId
+
+    if (item.itemId == android.R.id.home) {
+        onBackPressed()
+        finish()
         return true
-
+    } else {
+        super.onOptionsItemSelected(item)
+        return true
     }
+}
 
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        item.itemId
-
-        if (item.itemId == android.R.id.home) {
-            onBackPressed()
-            finish()
-            return true
-        } else {
-            super.onOptionsItemSelected(item)
-            return true
-        }
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (resultCode == Activity.RESULT_OK && resultCode == 101) {
+        data!!.getParcelableExtra<SampleTable>("name")
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK && resultCode == 101) {
-            data!!.getParcelableExtra<SampleTable>("name")
-        }
-    }
+}
 
 
 }
 
 /*
-private fun fromJson(data: String): SerializedBean {
-    return Gson().fromJson(data, SerializedBean::class.java)
+databaseReference.child(dataStudentList[position].id.toString()).removeValue()
+.addOnCompleteListener {
+    progressDialog.dismiss()
+    dataStudentList.removeAt(position)
+    adapter!!.notifyItemRemoved(position)
+}
+.addOnFailureListener {
+    progressBinding.progressBar.visibility = View.GONE
+    progressBinding.btnOk.visibility = View.VISIBLE
+    progressBinding.tvError.text = it.localizedMessage
 }
 
+}
+}, callbackEdit = { position ->
+    val intent = Intent(this, EditFormActivity::class.java)
+    intent.putExtra("data", dataStudentList[position])
+    startActivity(intent)
+})
+*/
 
-   private fun toGson(data: String): String {
-        return Gson().toJson(data)
-    }*/
+/*
+adapter = StudentAdapter(dataStudentList, callbackClear = { position ->
+    val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+    val progressBinding = LayoutBottomProgressBinding.inflate(layoutInflater)
+    progressDialog.setContentView(progressBinding.root)
+    progressDialog.show()
+    progressBinding.btnOk.setOnClickListener {
+        progressDialog.dismiss()
+    }
+*/
+
+
 

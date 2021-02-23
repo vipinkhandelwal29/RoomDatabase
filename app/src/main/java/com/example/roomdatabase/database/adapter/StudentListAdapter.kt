@@ -49,7 +49,7 @@ class StudentListAdapter(
                 .circleCrop().into(holder.itemCellBinding.ivUserImage)
 
             holder.itemCellBinding.txtDate.text =
-                SimpleDateFormat("dd.MM.yyyy", Locale.US).format(Date(studentList[position]!!.date))
+                SimpleDateFormat("dd.MM.yyyy", Locale.US).format(Date(studentList[position]!!.dob))
 
 
 
