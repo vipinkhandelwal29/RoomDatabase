@@ -13,4 +13,15 @@
     <string name="search">Search</string>
     <string name="dd_mm_yyyy">DD/MM/YYYY</string>
     <string name="address">Address</string>
+    <string name="ok">OK</string>
+    <string name="full_name">Full Name</string>
+    <string name="enter_your_name">Enter Your Name</string>
+    <string name="gender">Gender</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="date_of_birth">Date Of Birth</string>
+    <string name="date">DD-MM-YYYY</string>
+    <string name="submit">Submit</string>
+    <string name="enter_address">Enter Address</string>
+
 </resources>

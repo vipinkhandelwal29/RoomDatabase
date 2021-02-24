@@ -4,17 +4,21 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.view.MenuItem
+import android.view.View
 import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
+import com.example.roomdatabase.databinding.DailogProgressBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 import java.io.FileInputStream
@@ -28,27 +32,29 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
     private lateinit var studentData: StudentTable
     private var photo: String? = null
     private var tempFile: File? = null
+    private lateinit var token: String
 
     @SuppressLint("SimpleDateFormat")
     override fun initControl() {
 
 
         setSupportActionBar(binding.iToolbar.toolbar)
-        setTitle("Student Update")
+        title = "Student Update"
+
+        val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
+        token = pref.getString("token", null).toString()
+
 
         val cal = Calendar.getInstance()
 
         studentData = intent.getParcelableExtra("data")!!
 
-
         binding.etName.setText(studentData.name)
         binding.etAddress.setText(studentData.address)
-        binding.tvDatePicker.setText(studentData.dob.toString())
+        binding.tvDatePicker.text = studentData.dob.toString()
 
         cal.timeInMillis = studentData.dob
-        binding.tvDatePicker.setText(
-            SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
-        )
+        binding.tvDatePicker.text = SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
         photo = studentData.image
         Glide.with(this)
             .load(photo)
@@ -74,26 +80,20 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                     minAdultAge.add(Calendar.YEAR, -18)
                     minAdultAge.add(Calendar.MONTH, -1)
                     if (minAdultAge.before(userAge)) {
-                        messageShow("Your age 18+ requried")
-                        // Toast.makeText(this, "Your Age 18+ Requerd", Toast.LENGTH_SHORT).show()
+                        messageShow("Your age 18+ required")
                     } else {
-                        binding.tvDatePicker.setText(
+                        binding.tvDatePicker.text =
                             SimpleDateFormat("dd MMM, yyyy").format(Date(cal.timeInMillis))
-                        )
                     }
-
                 },
                 cal.get(Calendar.YEAR),
                 cal.get(Calendar.MONTH),
                 cal.get(Calendar.DAY_OF_MONTH)
-
-
             )
-            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+            datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
             datePickerDialog.show()
-
-
         }
+
         binding.ivUserImage.setOnClickListener {
             val dialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
             val dialogBinding = DailogImagePickerBinding.inflate(layoutInflater)
@@ -117,7 +117,20 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
 
             dialog.show()
         }
+
+        /* fun View.hideKeyboard(inputMethodManager: InputMethodManager) {
+             inputMethodManager.hideSoftInputFromWindow(windowToken, 0)
+         }*/
+
         binding.btnSubmit.setOnClickListener {
+            val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+            val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+            progressDialog.setContentView(progressBinding.root)
+            progressDialog.show()
+            progressBinding.btnOk.setOnClickListener {
+                progressDialog.dismiss()
+            }
+
 
             val name = binding.etName.text.toString()
             val gender =
@@ -127,9 +140,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
             val address = binding.etAddress.text.toString()
 
 
-            if (tempFile == null) {
-                messageShow("please enter your image")
-            } else if (name.isBlank()) {
+            if (name.isBlank()) {
                 messageShow("please enter your name")
             } else if (address.isBlank()) {
                 messageShow("please enter your address")
@@ -147,13 +158,18 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                             gender = gender,
                             dob = cal.timeInMillis,
                             address = address,
-                            image = it
+                            image = it,
+                            token = token
                         )
                         initFirebaseDatabase()
                         databaseReference.child(dataF.id.toString()).setValue(dataF)
                             .addOnCompleteListener {
+                                progressDialog.dismiss()
                                 finish()
                             }.addOnFailureListener {
+                                progressBinding.progressBar.visibility = View.GONE
+                                progressBinding.btnOk.visibility = View.VISIBLE
+                                progressBinding.tvError.text = it.localizedMessage
                                 messageShow(it.localizedMessage)
                             }
                     }
@@ -165,24 +181,31 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                         gender = gender,
                         dob = cal.timeInMillis,
                         address = address,
-                        image = studentData.image
+                        image = studentData.image,
+                        token = token
+
                     )
                     databaseReference.child(dataF.id.toString()).setValue(dataF)
                         .addOnCompleteListener {
+                            progressDialog.dismiss()
                             finish()
                         }.addOnFailureListener {
+                            progressBinding.progressBar.visibility = View.GONE
+                            progressBinding.btnOk.visibility = View.VISIBLE
+                            progressBinding.tvError.text = it.localizedMessage
                             messageShow(it.localizedMessage)
                         }
                 }
             }
-        }
+            closeKeyBoard()
 
+        }
     }
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
         val ref = storageReference.child("student/${tempFile!!.name}")
         val uploadTask = ref.putStream(FileInputStream(tempFile))
-        val urlTask = uploadTask.continueWithTask { task ->
+        uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
                 task.exception?.let {
                     Log.d("exception", "${it}")
@@ -196,11 +219,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                 callImage(downloadUri.toString())
                 Log.d("exception", "${task}")
 
-            } else {
-                // Handle failures
-                // ...
             }
-
         }
     }
 
@@ -262,5 +281,17 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
         }
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
 
+        if (id == android.R.id.home) {
+            onBackPressed()
+            return true
+            /*  Toast.makeText(this, "ActionClicked", Toast.LENGTH_LONG).show()
+              Log.d("btn", "menuBtnAdd  ")*/
+        } else {
+
+            return super.onOptionsItemSelected(item)
+        }
+    }
 }

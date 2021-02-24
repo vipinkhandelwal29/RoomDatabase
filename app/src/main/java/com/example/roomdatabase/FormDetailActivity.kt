@@ -4,6 +4,7 @@ import android.Manifest.permission.*
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -31,6 +32,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private var tempFile: File? = null
     private var dataList = ArrayList<StudentTable>()
     private var photo: String? = null
+    private lateinit var token: String
 
 
     override fun getLayoutId() = R.layout.activity_form_detail
@@ -40,9 +42,11 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     override fun initControl() {
 
 
-
         setSupportActionBar(binding.iToolbar.toolbar)
         setTitle("Add New Student")
+
+        val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
+        token = pref.getString("token", null).toString()
 
 
         val cal = Calendar.getInstance()
@@ -73,7 +77,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
 
             )
-            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis())
             datePickerDialog.show()
 
 
@@ -127,12 +131,14 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                         gender = gender,
                         dob = cal.timeInMillis,
                         address = address,
-                        image = it
+                        image = it,
+                        token = token
                     )
                     initFirebaseDatabase()
-                    databaseReference.child(dataF.id.toString()).setValue(dataF).addOnCompleteListener {
-                        finish()
-                    }.addOnFailureListener {
+                    databaseReference.child(dataF.id.toString()).setValue(dataF)
+                        .addOnCompleteListener {
+                            finish()
+                        }.addOnFailureListener {
                         messageShow(it.localizedMessage)
                     }
                 }
@@ -158,9 +164,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     }
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
-        val ref = storageReference!!.child("student/${tempFile!!.name}")
+        val ref = storageReference.child("student/${tempFile!!.name}")
         val uploadTask = ref.putStream(FileInputStream(tempFile))
-        val urlTask = uploadTask.continueWithTask { task ->
+        uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
                 task.exception?.let {
                     Log.d("exception", "${it}")
@@ -174,9 +180,6 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 callImage(downloadUri.toString())
                 Log.d("exception", "${task}")
 
-            } else {
-                // Handle failures
-                // ...
             }
 
         }

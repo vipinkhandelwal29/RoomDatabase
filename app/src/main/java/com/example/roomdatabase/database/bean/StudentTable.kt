@@ -11,5 +11,7 @@ data class StudentTable(
     @SerializedName("student_gender") val gender:String,
     @SerializedName("student_dob") val dob:Long,
     @SerializedName("student_address") val address:String,
-    @SerializedName("student_image") val image:String
-): Parcelable
+    @SerializedName("student_image") val image:String,
+    @SerializedName("student_token") val token:String
+
+    ): Parcelable
