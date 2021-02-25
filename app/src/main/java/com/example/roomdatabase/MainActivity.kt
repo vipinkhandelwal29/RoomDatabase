@@ -310,6 +310,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         return data
 
     }
+
 }
 
 
