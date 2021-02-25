@@ -13,14 +13,19 @@ import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.database.bean.StudentTable
-import com.example.roomdatabase.database.util.notificationClass
+import com.example.roomdatabase.database.retrofit.ApiClient
+import com.example.roomdatabase.database.retrofit.ApiInterface
 import com.example.roomdatabase.databinding.ActivityMainBinding
 import com.example.roomdatabase.databinding.DailogProgressBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
+import com.google.gson.Gson
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -29,7 +34,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     var adapter: StudentListAdapter? = null
     private var itemSearch: MenuItem? = null
     val dataList = ArrayList<StudentTable?>()
-    private  var token: String? = null
+    private var token: String? = null
     private lateinit var database: AppDatabase
     private var queryStr: String? = null
 
@@ -42,7 +47,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         setFirebaseEvent()
         getFirebaseData()
 
-        val pref = getSharedPreferences("MyPref",Context.MODE_PRIVATE)
+        val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
         token = pref.getString("token", null).toString()
         Log.d("Shared", "$token")
 
@@ -70,7 +75,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             databaseReference.child(dataList[position]!!.id.toString()).removeValue()
                 .addOnCompleteListener {
                     progressDialog.dismiss()
-                    adapter!!.notifyItemRemoved(position)
                 }
                 .addOnFailureListener {
                     progressBinding.progressBar.visibility = View.GONE
@@ -162,10 +166,31 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             startActivity(intent)
 
         }
+        getData()
         binding.refreshLayout.setOnRefreshListener()
         {
             getFirebaseData()
         }
+
+
+    }
+
+    private fun getData() {
+        val call = ApiClient.getApiClient().create(ApiInterface::class.java).fetchAllPosts()
+        call.enqueue(object : Callback<ResponseBody> {
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                Log.d("==>onFailure: ", call.toString())
+            }
+
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                Log.d("==>onResponse: ", response.body()!!.string())
+
+                if (response.isSuccessful) {
+
+                }
+            }
+
+        })
     }
 
     private fun getFirebaseData() {
@@ -175,7 +200,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             // if (result!=null && result.childrenCount > 0){
             dataList.clear()
             result!!.children.forEach {
-                Log.d("==>", "msg ${it.child("name").value}")
+                //Log.d("==>", "msg ${it.child("name").value}")
                 dataList.add(
                     StudentTable(
                         id = it.child("id").value.toString().toLong(),
@@ -202,22 +227,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                snapshot.children.forEach {
-                    dataList.add(
-                        StudentTable(
-                            id = it.child("id").value.toString().toLong(),
-                            name = it.child("name").value.toString(),
-                            gender = it.child("gender").value.toString(),
-                            dob = it.child("dob").value.toString().toLong(),
-                            address = it.child("address").value.toString(),
-                            image = it.child("image").value.toString(),
-                            token = it.child("token").value.toString()
-                        )
-                    )
-                }
-                dataList.clear()
-                dataList.addAll(dataList)
-                adapter!!.notifyDataSetChanged()
+                Log.d("==>", "onChildChanged: ${snapshot.value}")
+                val existPosition = snapshot.child("id").value.toString()
+
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -281,7 +293,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             data!!.getParcelableExtra<SampleTable>("name")
         }
     }
-}
 
+       private fun toGson(data: String): String {
+           return Gson().toJson(data)
+       }
+
+  /*  private fun fromJson(data: String): SerializedBean {
+        return Gson().fromJson(data, SerializedBean::class.java)
+    }
+*/
+    private fun readFromAsset(): String {
+        val filename = "student.json"
+        val bufferReader = application.assets.open(filename).bufferedReader()
+        val data = bufferReader.use { it.readText() }
+        Log.d("readFromAsset: ", data)
+        return data
+
+    }
+}
 
 

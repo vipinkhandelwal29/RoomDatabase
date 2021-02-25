@@ -15,6 +15,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import kotlinx.android.synthetic.main.recyclerview_item.*
 
 
 abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
@@ -52,7 +53,7 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         dialog.show()
     }
 
-    protected fun dialogProgress(Message: String)
+  /*  protected fun dialogProgress(Message: String)
     {
         val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
         val progressBinding = DailogProgressBinding.inflate(layoutInflater)
@@ -65,16 +66,15 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         progressBinding.btnOk.visibility = View.VISIBLE
         progressBinding.tvError.text = Message
 
-    }
+    }*/
 
-    protected fun closeKeyBoard() {
-        val view = this.currentFocus
-        if (view != null) {
+    /*protected fun closeKeyBoard() {
+
             val imm: InputMethodManager =
                 getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(view.windowToken, 0)
-        }
-    }
+
+    }*/
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         if (currentFocus != null) {
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager

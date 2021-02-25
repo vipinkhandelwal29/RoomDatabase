@@ -13,11 +13,13 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
+import com.example.roomdatabase.databinding.DailogProgressBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import java.io.File
 import java.io.FileInputStream
@@ -51,6 +53,8 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         val cal = Calendar.getInstance()
         binding.tvDatePicker.setOnClickListener {
+
+
             val datePickerDialog = DatePickerDialog(
                 this,
                 DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
@@ -124,6 +128,15 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 messageShow("please enter your date")
             } else {
                 initFirebaseStorage()
+                val progressDialog =
+                    BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+                val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+                progressDialog.setContentView(progressBinding.root)
+                progressDialog.show()
+                progressBinding.btnOk.setOnClickListener {
+                    progressDialog.dismiss()
+                }
+
                 uploadImage {
                     val dataF = StudentTable(
                         id = System.currentTimeMillis(),
@@ -140,7 +153,11 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                             finish()
                         }.addOnFailureListener {
                         messageShow(it.localizedMessage)
-                    }
+                            progressBinding.progressBar.visibility = View.GONE
+                            progressBinding.btnOk.visibility = View.VISIBLE
+                            progressBinding.tvError.text = it.localizedMessage
+
+                        }
                 }
 
                 setResult(Activity.RESULT_OK, intent)

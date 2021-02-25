@@ -69,6 +69,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
         Glide.with(this)
 
         binding.tvDatePicker.setOnClickListener {
+            //closeKeyBoard()
             val datePickerDialog = DatePickerDialog(
                 this,
                 DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
@@ -130,7 +131,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
             progressBinding.btnOk.setOnClickListener {
                 progressDialog.dismiss()
             }
-
+            //closeKeyBoard()
 
             val name = binding.etName.text.toString()
             val gender =
@@ -197,7 +198,6 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                         }
                 }
             }
-            closeKeyBoard()
 
         }
     }
@@ -287,8 +287,6 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
         if (id == android.R.id.home) {
             onBackPressed()
             return true
-            /*  Toast.makeText(this, "ActionClicked", Toast.LENGTH_LONG).show()
-              Log.d("btn", "menuBtnAdd  ")*/
         } else {
 
             return super.onOptionsItemSelected(item)
