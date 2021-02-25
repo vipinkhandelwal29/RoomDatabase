@@ -23,6 +23,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.gson.Gson
 import okhttp3.ResponseBody
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -45,7 +46,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         initFirebaseDatabase()
         setFirebaseEvent()
-        getFirebaseData()
+        getData()
+
 
         val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
         token = pref.getString("token", null).toString()
@@ -118,7 +120,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         var isProgressBar = false
 
 
-/*
+        /*
         binding.recyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 val postion = manager.findLastVisibleItemPosition()
@@ -169,31 +171,63 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         getData()
         binding.refreshLayout.setOnRefreshListener()
         {
-            getFirebaseData()
+            getData()
         }
-
-
     }
 
     private fun getData() {
         val call = ApiClient.getApiClient().create(ApiInterface::class.java).fetchAllPosts()
         call.enqueue(object : Callback<ResponseBody> {
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                Log.d("==>onFailure: ", call.toString())
+                Log.d("==>", "onFailure: ${call}")
             }
 
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                Log.d("==>onResponse: ", response.body()!!.string())
-
+                //Log.d("==>onResponse: ", response.body()!!.string())
+                val jsonData = response.body()!!.string()
                 if (response.isSuccessful) {
+
+                    binding.refreshLayout.isRefreshing = true
+                    val jsonObject = JSONObject(jsonData)
+                    val keys: Iterator<String> = jsonObject.keys()
+
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        if (jsonObject.get(key) is JSONObject) {
+
+                            Log.d("==>jsonObject.get(key)", "${key} ")
+                            val childData = jsonObject.getJSONObject(key)
+                            Log.d("==>childData", "$childData ")
+
+                            val data1 = Gson().fromJson<StudentTable>(childData.toString(), StudentTable::class.java)
+                            Log.d("data1", "$data1 ")
+
+                            dataList.add(data1)
+                            /*dataList.add(
+                                StudentTable(
+                                    id = childData.getString("id").toLong(),
+                                    image = childData.getString("image"),
+                                    name = childData.getString("name"),
+                                    gender = childData.getString("gender"),
+                                    dob = childData.getLong("dob"),
+                                    address = childData.getString("address"),
+                                    token = childData.getString("token")
+                                ))*/
+                            Log.d("==>dataList", "$dataList ")
+                        }
+                        adapter!!.notifyDataSetChanged()
+                        binding.refreshLayout.isRefreshing = false
+                    }
+
+
+                } else {
 
                 }
             }
-
         })
     }
 
-    private fun getFirebaseData() {
+   /* private fun getFirebaseData() {
         binding.refreshLayout.isRefreshing = true
         databaseReference.get().addOnCompleteListener {
             val result = it.result
@@ -218,7 +252,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             adapter!!.notifyDataSetChanged()
         }
         binding.refreshLayout.isRefreshing = false
-    }
+    }*/
 
     private fun setFirebaseEvent() {
         databaseReference.addChildEventListener(object : ChildEventListener {
@@ -227,13 +261,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                Log.d("==>", "onChildChanged: ${snapshot.value}")
-                val existPosition = snapshot.child("id").value.toString()
+                Log.e("==>", "onChildChanged: ${snapshot.value}")
+                for (ds in snapshot.children) {
 
+                    Log.d("==>Key", "${ds.key} ")
+                }
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                Log.d("onChildAdded", "onChildAdded: ${snapshot}")
+                //Log.d("onChildAdded", "onChildAdded: ${snapshot}")
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
@@ -294,14 +330,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
     }
 
-       private fun toGson(data: String): String {
-           return Gson().toJson(data)
-       }
+    /*private fun toGson(data: String): String {
+        return Gson().toJson(data)
+    }*/
+    /*private fun fromJson(data: String): StudentTable {
+        return Gson().fromJson(data, StudentTable::class.java)
+    }*/
 
-  /*  private fun fromJson(data: String): SerializedBean {
-        return Gson().fromJson(data, SerializedBean::class.java)
-    }
-*/
     private fun readFromAsset(): String {
         val filename = "student.json"
         val bufferReader = application.assets.open(filename).bufferedReader()
@@ -314,3 +349,168 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+private fun getRetrofitdata() {
+    val call = ApiClient.getApiClient().create(ApiInterface::class.java).getData()
+    call.enqueue(object : Callback<ResponseBody> {
+        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+            Log.d("==>onFailure", call.toString())
+            Toast.makeText(this@MainActivity, "Something went wrong $t", Toast.LENGTH_SHORT)
+                .show()
+        }
+
+        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+            val jsonData = response.body()!!.string()
+            Log.d("==>jsonData", jsonData)
+
+            if (response.isSuccessful) {
+
+
+                val jsonObject = JSONObject(jsonData)
+                Log.d("==>jsonObject", jsonObject.toString())
+
+
+                */
+/*val root = JSONObject()
+                val container = root.getJSONObject(jsonData)
+                Log.d("====>","$container")*//*
+
+
+                val keys = jsonObject.keys()
+
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    Log.d(">>key", "$key")
+                    val childData = jsonObject.getJSONObject(key)
+                    val gson = Gson()
+                    val itemObject = gson.fromJson<StudentTableFirebase>(
+                        childData.toString(),
+                        StudentTableFirebase::class.java
+                    )
+                    dataList.add(itemObject)
+
+                    */
+/*dataList.add(
+                        StudentTableFirebase(
+                            id = childData.getString("id").toLong(),
+                            image = childData.getString("image"),
+                            name = childData.getString("name"),
+                            gender = childData.getString("gender"),
+                            dob = childData.getLong("dob"),
+                            address = childData.getString("address"),
+                            token = childData.getString("token")
+                        )
+                    )*//*
+
+
+                    Log.d(">>dataList", "${childData}")// do something with jsonObject here
+
+                }
+                */
+/* var json = JSONArray(jsonData)
+// ...
+
+// ...
+                 for (i in 0 until json.length()) {
+                     val map =
+                         HashMap<String, String>()
+                     val e: JSONObject = json.getJSONObject(i)
+                     map["id"] = i.toString()
+                     map["name"] =  e.getString("name")
+                     map["gender"] = e.getString("gender")
+                     map["dob"] =  e.getString("dob")
+                     map["address"] = e.getString("address")
+                     map["image"] = e.getString("image")
+                     map["token"] =  e.getString("token")
+
+                     Log.d("====>","$map")
+
+
+                     //dataList.add(map)
+                 }*//*
+
+                */
+/*  try {
+                    val jsonObject = JSONObject(jsonData)
+                    val users = jsonObject.getJSONArray("student.json")
+                    for (i in 0 until users.length()) {
+                        val obj = users.getJSONObject(i)
+                        val name = obj.get("student").toString()
+                        Log.d("=====", name)
+
+                    }
+                } catch (e: JSONException) {
+                }*//*
+
+
+
+            } else {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Something went wrong ${response.message()}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            */
+/* val jsonObject = JSONObject(call.toString())*//*
+
+
+            //Log.d("==>>>", jsonObject.toString())
+            //val jsonObject = JSONObject(Gson().toJson(response.body()))
+
+        }
+
+    })
+}*/

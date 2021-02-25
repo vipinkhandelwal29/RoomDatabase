@@ -7,11 +7,11 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 data class StudentTable(
     @SerializedName("id")val id:Long,
-    @SerializedName("student_name") val name:String,
-    @SerializedName("student_gender") val gender:String,
-    @SerializedName("student_dob") val dob:Long,
-    @SerializedName("student_address") val address:String,
-    @SerializedName("student_image") val image:String,
-    @SerializedName("student_token") val token:String
+    @SerializedName("name") val name:String,
+    @SerializedName("gender") val gender:String,
+    @SerializedName("dob") val dob:Long,
+    @SerializedName("address") val address:String,
+    @SerializedName("image") val image:String,
+    @SerializedName("token") val token:String
 
     ): Parcelable

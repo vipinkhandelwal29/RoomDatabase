@@ -27,7 +27,6 @@ class MyFirebaseInstanceIdServe : FirebaseMessagingService() {
         intent.putExtra("message", remoteMessage.notification!!.body!!)
         startActivity(intent)
         Log.d("==>", "onMessageReceived: ${remoteMessage}")
-
         Log.d("==>", "From: " + remoteMessage.from)
         Log.d("==>", "Notification Message Body: " + remoteMessage.notification!!.body!!)
     }
