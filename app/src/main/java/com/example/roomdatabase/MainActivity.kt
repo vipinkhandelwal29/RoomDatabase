@@ -32,9 +32,9 @@ import kotlin.collections.ArrayList
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
-    var adapter: StudentListAdapter? = null
+    private var adapter: StudentListAdapter? = null
     private var itemSearch: MenuItem? = null
-    val dataList = ArrayList<StudentTable?>()
+    private val dataList = ArrayList<StudentTable?>()
     private var token: String? = null
     private lateinit var database: AppDatabase
     private var queryStr: String? = null
@@ -46,7 +46,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         initFirebaseDatabase()
         setFirebaseEvent()
-        getData()
+        //getRetrofitData()
 
 
         val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
@@ -66,55 +66,29 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             intent.putExtra("data", dataList[position])
             startActivity(intent)
         }, callDelete = { position ->
-            val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
-            val progressBinding = DailogProgressBinding.inflate(layoutInflater)
-            progressDialog.setContentView(progressBinding.root)
-            progressDialog.show()
-            progressBinding.btnOk.setOnClickListener {
-                progressDialog.dismiss()
-            }
+            deleteRetrofitData(position)
 
-            databaseReference.child(dataList[position]!!.id.toString()).removeValue()
-                .addOnCompleteListener {
-                    progressDialog.dismiss()
-                }
-                .addOnFailureListener {
-                    progressBinding.progressBar.visibility = View.GONE
-                    progressBinding.btnOk.visibility = View.VISIBLE
-                    progressBinding.tvError.text = it.localizedMessage
-                }
-            /*databaseReference.child(dataList[it]!!.id.toString()).removeValue()
-             database.sampleDao().delete(dataList[it]!!.id)
-            dataList.removeAt(it)*/
+            /* databaseReference.child(dataList[position]!!.id.toString()).removeValue()
+                 .addOnCompleteListener {
+                     progressDialog.dismiss()
+                 }
+                 .addOnFailureListener {
+                     progressBinding.progressBar.visibility = View.GONE
+                     progressBinding.btnOk.visibility = View.VISIBLE
+                     progressBinding.tvError.text = it.localizedMessage
+                 }*/
             adapter?.notifyDataSetChanged()
 
         })
 
-        /* databaseReference.addValueEventListener(object : ValueEventListener {
-             override fun onCancelled(error: DatabaseError) {
-                 
-             }
-
-             override fun onDataChange(snapshot: DataSnapshot) {
-                 val studentList = ArrayList<StudentTable>()
-                 snapshot.children.forEach {
-                     studentList.add(
-                         StudentTable(
-                             id = it.child("id").value.toString().toLong(),
-                             name = it.child("name").value.toString(),
-                             gender = it.child("gender").value.toString(),
-                             dob = it.child("dob").value.toString().toLong(),
-                             address = it.child("address").value.toString(),
-                             image = it.child("image").value.toString()
-                         )
-                     )
-                 }
-                 dataList.clear()
-                 dataList.addAll(studentList)
-                 adapter!!.notifyDataSetChanged()
-             }
-         })*/
-
+       /* if (dataList.isEmpty()) {
+            binding.recyclerview.setVisibility(View.GONE);
+            binding.emptyView.setVisibility(View.VISIBLE);
+        }
+        else {
+            binding.recyclerview.setVisibility(View.VISIBLE);
+            binding.emptyView.setVisibility(View.GONE);
+        }*/
 
         binding.recyclerview.adapter = adapter
         var isProgressBar = false
@@ -165,94 +139,112 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         {
             //notificationClass()
             val intent = Intent(this, FormDetailActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, 555)
 
         }
-        getData()
+
         binding.refreshLayout.setOnRefreshListener()
         {
-            getData()
+            getRetrofitData()
         }
+
+        getRetrofitData()
+        binding.refreshLayout.isRefreshing = true
     }
 
-    private fun getData() {
-        val call = ApiClient.getApiClient().create(ApiInterface::class.java).fetchAllPosts()
-        call.enqueue(object : Callback<ResponseBody> {
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                Log.d("==>", "onFailure: ${call}")
+
+    private fun deleteRetrofitData(positon: Int) {
+        val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+        val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+        progressDialog.setContentView(progressBinding.root)
+        progressDialog.show()
+        progressBinding.btnOk.setOnClickListener {
+            progressDialog.dismiss()
+        }
+        val call = ApiClient.getApiClient().create(ApiInterface::class.java)
+            .deleteData(dataList[positon]!!.id.toString())
+        call.enqueue(object : Callback<StudentTable> {
+            override fun onFailure(call: Call<StudentTable>, t: Throwable) {
+                progressBinding.progressBar.visibility = View.GONE
+                progressBinding.btnOk.visibility = View.VISIBLE
+                progressBinding.tvError.text = "Check Connectivity"
+
             }
 
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                //Log.d("==>onResponse: ", response.body()!!.string())
-                val jsonData = response.body()!!.string()
+            override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
+                dataList.removeAt(positon)
+                progressDialog.dismiss()
+                adapter?.notifyDataSetChanged()
+            }
+
+        })
+    }
+
+
+    private fun getRetrofitData() {
+        binding.refreshLayout.isRefreshing = true
+        dataList.clear()
+        val call = ApiClient.getApiClient().create(ApiInterface::class.java).fetchAllPosts()
+        call.enqueue(object : Callback<HashMap<String, StudentTable>> {
+            override fun onResponse(
+                call: Call<HashMap<String, StudentTable>>,
+                response: Response<HashMap<String, StudentTable>>
+            ) {
                 if (response.isSuccessful) {
-
-                    binding.refreshLayout.isRefreshing = true
-                    val jsonObject = JSONObject(jsonData)
-                    val keys: Iterator<String> = jsonObject.keys()
-
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        if (jsonObject.get(key) is JSONObject) {
-
-                            Log.d("==>jsonObject.get(key)", "${key} ")
-                            val childData = jsonObject.getJSONObject(key)
-                            Log.d("==>childData", "$childData ")
-
-                            val data1 = Gson().fromJson<StudentTable>(childData.toString(), StudentTable::class.java)
-                            Log.d("data1", "$data1 ")
-
-                            dataList.add(data1)
-                            /*dataList.add(
-                                StudentTable(
-                                    id = childData.getString("id").toLong(),
-                                    image = childData.getString("image"),
-                                    name = childData.getString("name"),
-                                    gender = childData.getString("gender"),
-                                    dob = childData.getLong("dob"),
-                                    address = childData.getString("address"),
-                                    token = childData.getString("token")
-                                ))*/
-                            Log.d("==>dataList", "$dataList ")
-                        }
-                        adapter!!.notifyDataSetChanged()
+                    if (response.body() == null) {
+                        binding.emptyView.setVisibility(View.VISIBLE)
                         binding.refreshLayout.isRefreshing = false
+                        adapter!!.notifyDataSetChanged()
+                        return
+                    } else {
+                        binding.refreshLayout.isRefreshing = false
+                        dataList.addAll(response.body()!!.values)
+                        binding.emptyView.setVisibility(View.GONE)
+                        binding.refreshLayout.isRefreshing = false
+                        adapter!!.notifyDataSetChanged()
                     }
-
-
                 } else {
-
+                    binding.refreshLayout.isRefreshing = false
+                    messageShow(response.message())
                 }
+                adapter!!.notifyDataSetChanged()
+            }
+
+            override fun onFailure(call: Call<HashMap<String, StudentTable>>, t: Throwable) {
+                binding.emptyView.setVisibility(View.VISIBLE)
+                binding.refreshLayout.isRefreshing = false
+                messageShow("Please check internet connection")
             }
         })
     }
 
-   /* private fun getFirebaseData() {
-        binding.refreshLayout.isRefreshing = true
-        databaseReference.get().addOnCompleteListener {
-            val result = it.result
-            // if (result!=null && result.childrenCount > 0){
-            dataList.clear()
-            result!!.children.forEach {
-                //Log.d("==>", "msg ${it.child("name").value}")
-                dataList.add(
-                    StudentTable(
-                        id = it.child("id").value.toString().toLong(),
-                        name = it.child("name").value.toString(),
-                        address = it.child("address").value.toString(),
-                        image = it.child("image").value.toString(),
-                        dob = it.child("dob").value.toString().toLong(),
-                        gender = it.child("gender").value.toString(),
-                        token = it.child("token").value.toString()
 
-                    )
-                )
-            }
-            setFirebaseEvent()
-            adapter!!.notifyDataSetChanged()
-        }
-        binding.refreshLayout.isRefreshing = false
-    }*/
+    /* private fun getFirebaseData() {
+         binding.refreshLayout.isRefreshing = true
+         databaseReference.get().addOnCompleteListener {
+             val result = it.result
+             // if (result!=null && result.childrenCount > 0){
+             dataList.clear()
+             result!!.children.forEach {
+                 //Log.d("==>", "msg ${it.child("name").value}")
+                 dataList.add(
+                     StudentTable(
+                         id = it.child("id").value.toString().toLong(),
+                         name = it.child("name").value.toString(),
+                         address = it.child("address").value.toString(),
+                         image = it.child("image").value.toString(),
+                         dob = it.child("dob").value.toString().toLong(),
+                         gender = it.child("gender").value.toString(),
+                         token = it.child("token").value.toString()
+
+                     )
+                 )
+             }
+             setFirebaseEvent()
+             adapter!!.notifyDataSetChanged()
+         }
+         binding.refreshLayout.isRefreshing = false
+     }*/
 
     private fun setFirebaseEvent() {
         databaseReference.addChildEventListener(object : ChildEventListener {
@@ -261,20 +253,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                Log.e("==>", "onChildChanged: ${snapshot.value}")
-                for (ds in snapshot.children) {
-
-                    Log.d("==>Key", "${ds.key} ")
-                }
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                //Log.d("onChildAdded", "onChildAdded: ${snapshot}")
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
-
-
             }
         })
     }
@@ -325,192 +309,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK && resultCode == 101) {
-            data!!.getParcelableExtra<SampleTable>("name")
+        if (requestCode == 555 && resultCode == 555) {
+            val intent =data!!.getParcelableExtra<StudentTable>("name")
+            val dataPosition = dataList.find { it!!.id == intent!!.id }
+            dataList.add(dataPosition)
+
+            Log.d("==>",dataPosition!!.id.toString())
+
+            val positon = dataList.indexOf(dataPosition)
+            dataList.add(positon,intent)
+            adapter!!.notifyDataSetChanged()
         }
-    }
-
-    /*private fun toGson(data: String): String {
-        return Gson().toJson(data)
-    }*/
-    /*private fun fromJson(data: String): StudentTable {
-        return Gson().fromJson(data, StudentTable::class.java)
-    }*/
-
-    private fun readFromAsset(): String {
-        val filename = "student.json"
-        val bufferReader = application.assets.open(filename).bufferedReader()
-        val data = bufferReader.use { it.readText() }
-        Log.d("readFromAsset: ", data)
-        return data
-
+        else if (requestCode == 552 && resultCode == 552)
+        {
+            val intent =data?.data
+        }
     }
 
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-private fun getRetrofitdata() {
-    val call = ApiClient.getApiClient().create(ApiInterface::class.java).getData()
-    call.enqueue(object : Callback<ResponseBody> {
-        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-            Log.d("==>onFailure", call.toString())
-            Toast.makeText(this@MainActivity, "Something went wrong $t", Toast.LENGTH_SHORT)
-                .show()
-        }
-
-        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-            val jsonData = response.body()!!.string()
-            Log.d("==>jsonData", jsonData)
-
-            if (response.isSuccessful) {
-
-
-                val jsonObject = JSONObject(jsonData)
-                Log.d("==>jsonObject", jsonObject.toString())
-
-
-                */
-/*val root = JSONObject()
-                val container = root.getJSONObject(jsonData)
-                Log.d("====>","$container")*//*
-
-
-                val keys = jsonObject.keys()
-
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    Log.d(">>key", "$key")
-                    val childData = jsonObject.getJSONObject(key)
-                    val gson = Gson()
-                    val itemObject = gson.fromJson<StudentTableFirebase>(
-                        childData.toString(),
-                        StudentTableFirebase::class.java
-                    )
-                    dataList.add(itemObject)
-
-                    */
-/*dataList.add(
-                        StudentTableFirebase(
-                            id = childData.getString("id").toLong(),
-                            image = childData.getString("image"),
-                            name = childData.getString("name"),
-                            gender = childData.getString("gender"),
-                            dob = childData.getLong("dob"),
-                            address = childData.getString("address"),
-                            token = childData.getString("token")
-                        )
-                    )*//*
-
-
-                    Log.d(">>dataList", "${childData}")// do something with jsonObject here
-
-                }
-                */
-/* var json = JSONArray(jsonData)
-// ...
-
-// ...
-                 for (i in 0 until json.length()) {
-                     val map =
-                         HashMap<String, String>()
-                     val e: JSONObject = json.getJSONObject(i)
-                     map["id"] = i.toString()
-                     map["name"] =  e.getString("name")
-                     map["gender"] = e.getString("gender")
-                     map["dob"] =  e.getString("dob")
-                     map["address"] = e.getString("address")
-                     map["image"] = e.getString("image")
-                     map["token"] =  e.getString("token")
-
-                     Log.d("====>","$map")
-
-
-                     //dataList.add(map)
-                 }*//*
-
-                */
-/*  try {
-                    val jsonObject = JSONObject(jsonData)
-                    val users = jsonObject.getJSONArray("student.json")
-                    for (i in 0 until users.length()) {
-                        val obj = users.getJSONObject(i)
-                        val name = obj.get("student").toString()
-                        Log.d("=====", name)
-
-                    }
-                } catch (e: JSONException) {
-                }*//*
-
-
-
-            } else {
-                Toast.makeText(
-                    this@MainActivity,
-                    "Something went wrong ${response.message()}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-
-            */
-/* val jsonObject = JSONObject(call.toString())*//*
-
-
-            //Log.d("==>>>", jsonObject.toString())
-            //val jsonObject = JSONObject(Gson().toJson(response.body()))
-
-        }
-
-    })
-}*/

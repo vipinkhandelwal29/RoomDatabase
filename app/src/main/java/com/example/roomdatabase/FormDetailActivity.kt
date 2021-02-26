@@ -16,17 +16,24 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
+import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.StudentTable
+import com.example.roomdatabase.database.retrofit.ApiClient
+import com.example.roomdatabase.database.retrofit.ApiInterface
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
 import com.example.roomdatabase.databinding.DailogProgressBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.log
 
 
 class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnClickListener {
@@ -35,6 +42,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private var dataList = ArrayList<StudentTable>()
     private var photo: String? = null
     private lateinit var token: String
+    private var adapter: StudentListAdapter? = null
 
 
     override fun getLayoutId() = R.layout.activity_form_detail
@@ -108,6 +116,18 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         }
         binding.btnSubmit.setOnClickListener {
 
+            /*val data = StudentTable(
+                id = System.currentTimeMillis(),
+                name = "Vipin",
+                gender = "male",
+                dob = cal.timeInMillis,
+                address = "address",
+                image = "null",
+                token = token
+            )
+            putRetrofitData(data, data.id)
+            Log.d("==>", "initControl: ${data}")*/
+
             val name = binding.etName.text.toString()
             val gender =
                 if (binding.rbMale.isChecked) "Male"
@@ -116,9 +136,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             val address = binding.etAddress.text.toString()
 
 
-            if (tempFile == null) {
-                messageShow("please enter your image")
-            } else if (name.isBlank()) {
+            if (name.isBlank()) {
                 messageShow("please enter your name")
             } else if (address.isBlank()) {
                 messageShow("please enter your address")
@@ -128,16 +146,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 messageShow("please enter your date")
             } else {
                 initFirebaseStorage()
-                val progressDialog =
-                    BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
-                val progressBinding = DailogProgressBinding.inflate(layoutInflater)
-                progressDialog.setContentView(progressBinding.root)
-                progressDialog.show()
-                progressBinding.btnOk.setOnClickListener {
-                    progressDialog.dismiss()
-                }
+                uploadImage(callImage = {
+                    initFirebaseDatabase()
 
-                uploadImage {
                     val dataF = StudentTable(
                         id = System.currentTimeMillis(),
                         name = name,
@@ -147,38 +158,34 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                         image = it,
                         token = token
                     )
-                    initFirebaseDatabase()
-                    databaseReference.child(dataF.id.toString()).setValue(dataF)
-                        .addOnCompleteListener {
-                            finish()
-                        }.addOnFailureListener {
-                        messageShow(it.localizedMessage)
-                            progressBinding.progressBar.visibility = View.GONE
-                            progressBinding.btnOk.visibility = View.VISIBLE
-                            progressBinding.tvError.text = it.localizedMessage
-
-                        }
-                }
+                    putRetrofitData(dataF, dataF.id)
+                    Log.d("==>", "putRetrofitData ${dataF.id} ")
+                })
 
                 setResult(Activity.RESULT_OK, intent)
                 finish()
-                binding.etName.text = null
-                binding.etAddress.text = null
-                binding.rbMale.text = null
-                binding.rbFemale.text = null
-                binding.tvDatePicker.text = null
+            }
 
-                /*val id = sampleDao.insertData(data)
-                Toast.makeText(this, "$id: $name: $gender $date  $address", Toast.LENGTH_LONG)
-                    .show()*//*
-                  val intent = Intent(this, MainActivity::class.java)
-                  intent.putExtra("date", data)
-                  startActivity(intent)
-                  Log.d("result", "name: $name adr: $address gender: $gender  date: $date id :$id")*/
+        }
+
+    }
+
+
+    private fun putRetrofitData(data: StudentTable, id: Long) {
+        val call = ApiClient.getApiClient().create(ApiInterface::class.java)
+            .putData(data = data, id = id.toString())
+        call.enqueue(object : Callback<StudentTable> {
+            override fun onFailure(call: Call<StudentTable>, t: Throwable) {
 
             }
-        }
+
+            override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
+
+            }
+
+        })
     }
+
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
         val ref = storageReference.child("student/${tempFile!!.name}")
@@ -280,35 +287,8 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
         TODO("Not yet implemented")
     }
 
-    /*private fun addUserChangeListener() {
-        // User data change listener
-        myRef.child("students").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val user = dataSnapshot.getValue(SampleTable::class.java)
 
-                // Check for null
-                if (user == null) {
-                    return
-                }
-
-
-
-
-                // Display newly updated name and email
-                binding.etName.setText(user?.name).toString()
-                binding.etAddress.setText(user?.name).toString()
-                //binding.gr.setText(user?.name).toString()
-                // clear edit text erNameEt.setText("")
-                //userMobileEt.setText("")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Failed to read value
-            }
-        })
-    }*/
 }
-
 
 
 

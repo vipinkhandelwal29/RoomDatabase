@@ -3,6 +3,7 @@
     <style name="searchBarTitle">
         <item name="android:editTextColor">@android:color/white</item>
         <item name="android:textColorHint">@android:color/white</item>
+        <item name="windowNoTitle">true</item>
 
     </style>
 

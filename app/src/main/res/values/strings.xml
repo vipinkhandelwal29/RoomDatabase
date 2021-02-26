@@ -23,5 +23,6 @@
     <string name="date">DD-MM-YYYY</string>
     <string name="submit">Submit</string>
     <string name="enter_address">Enter Address</string>
+    <string name="no_data_found">No data found</string>
 
 </resources>

@@ -53,20 +53,7 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         dialog.show()
     }
 
-  /*  protected fun dialogProgress(Message: String)
-    {
-        val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
-        val progressBinding = DailogProgressBinding.inflate(layoutInflater)
-        progressDialog.setContentView(progressBinding.root)
-        progressDialog.show()
-        progressBinding.btnOk.setOnClickListener {
-            progressDialog.dismiss()
-        }
-        progressBinding.progressBar.visibility = View.GONE
-        progressBinding.btnOk.visibility = View.VISIBLE
-        progressBinding.tvError.text = Message
-
-    }*/
+    
 
     /*protected fun closeKeyBoard() {
 

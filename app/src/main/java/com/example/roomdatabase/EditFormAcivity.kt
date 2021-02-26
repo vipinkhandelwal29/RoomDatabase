@@ -15,11 +15,17 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.app.ActivityCompat
 import com.bumptech.glide.Glide
+import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.StudentTable
+import com.example.roomdatabase.database.retrofit.ApiClient
+import com.example.roomdatabase.database.retrofit.ApiInterface
 import com.example.roomdatabase.databinding.ActivityFormDetailBinding
 import com.example.roomdatabase.databinding.DailogImagePickerBinding
 import com.example.roomdatabase.databinding.DailogProgressBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -33,6 +39,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
     private var photo: String? = null
     private var tempFile: File? = null
     private lateinit var token: String
+    private var adapter: StudentListAdapter? = null
 
     @SuppressLint("SimpleDateFormat")
     override fun initControl() {
@@ -163,6 +170,9 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                             token = token
                         )
                         initFirebaseDatabase()
+                        editRetrofitData(dataF,dataF.id)
+
+                        /*
                         databaseReference.child(dataF.id.toString()).setValue(dataF)
                             .addOnCompleteListener {
                                 progressDialog.dismiss()
@@ -172,8 +182,9 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                                 progressBinding.btnOk.visibility = View.VISIBLE
                                 progressBinding.tvError.text = it.localizedMessage
                                 messageShow(it.localizedMessage)
-                            }
+                            }*/
                     }
+
                 } else {
                     initFirebaseDatabase()
                     val dataF = StudentTable(
@@ -186,7 +197,8 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                         token = token
 
                     )
-                    databaseReference.child(dataF.id.toString()).setValue(dataF)
+                    editRetrofitData(dataF,dataF.id)
+                   /* databaseReference.child(dataF.id.toString()).setValue(dataF)
                         .addOnCompleteListener {
                             progressDialog.dismiss()
                             finish()
@@ -195,12 +207,42 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                             progressBinding.btnOk.visibility = View.VISIBLE
                             progressBinding.tvError.text = it.localizedMessage
                             messageShow(it.localizedMessage)
-                        }
+                        }*/
                 }
+                setResult(Activity.RESULT_OK, intent)
+                finish()
             }
-
         }
     }
+
+
+    private fun editRetrofitData(data: StudentTable, id: Long) {
+        val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+        val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+        progressDialog.setContentView(progressBinding.root)
+        progressDialog.show()
+        progressBinding.btnOk.setOnClickListener {
+            progressDialog.dismiss()
+        }
+        val call = ApiClient.getApiClient().create(ApiInterface::class.java)
+            .putData(data = data, id = id.toString())
+        call.enqueue(object : Callback<StudentTable> {
+            override fun onFailure(call: Call<StudentTable>, t: Throwable) {
+                progressBinding.progressBar.visibility = View.GONE
+                progressBinding.btnOk.visibility = View.VISIBLE
+                progressBinding.tvError.text = t.localizedMessage
+            }
+            override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
+                progressDialog.dismiss()
+                val intent = Intent()
+                intent.putExtra("data",response.body().toString())
+                setResult(555, intent)
+                adapter?.notifyItemChanged(id.toInt())
+            }
+
+        })
+    }
+
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
         val ref = storageReference.child("student/${tempFile!!.name}")
