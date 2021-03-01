@@ -13,7 +13,10 @@ import com.example.roomdatabase.database.AppDatabase
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.SampleTable
 import com.example.roomdatabase.database.bean.StudentTable
+import com.example.roomdatabase.database.fcm.FCMData
+import com.example.roomdatabase.database.fcm.FCMPayLoad
 import com.example.roomdatabase.database.retrofit.ApiClient
+import com.example.roomdatabase.database.retrofit.ApiClientTwo
 import com.example.roomdatabase.database.retrofit.ApiInterface
 import com.example.roomdatabase.databinding.ActivityMainBinding
 import com.example.roomdatabase.databinding.DailogProgressBinding
@@ -68,71 +71,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }, callDelete = { position ->
             deleteRetrofitData(position)
 
-            /* databaseReference.child(dataList[position]!!.id.toString()).removeValue()
-                 .addOnCompleteListener {
-                     progressDialog.dismiss()
-                 }
-                 .addOnFailureListener {
-                     progressBinding.progressBar.visibility = View.GONE
-                     progressBinding.btnOk.visibility = View.VISIBLE
-                     progressBinding.tvError.text = it.localizedMessage
-                 }*/
+
             adapter?.notifyDataSetChanged()
 
         })
 
-       /* if (dataList.isEmpty()) {
-            binding.recyclerview.setVisibility(View.GONE);
-            binding.emptyView.setVisibility(View.VISIBLE);
-        }
-        else {
-            binding.recyclerview.setVisibility(View.VISIBLE);
-            binding.emptyView.setVisibility(View.GONE);
-        }*/
-
         binding.recyclerview.adapter = adapter
         var isProgressBar = false
-
-
-        /*
-        binding.recyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val postion = manager.findLastVisibleItemPosition()
-                super.onScrolled(recyclerView, dx, dy)
-
-                if (postion == dataList.size - 1 && !isProgressBar) {
-                    dataList.add(null)
-                    isProgressBar = true
-                    adapter!!.notifyItemInserted(dataList.size - 1)
-                    Thread {
-
-                        sleep(2000)
-                        dataList.remove(null)
-                        dataList.addAll(dataList)
-                        runOnUiThread {
-                            adapter!!.notifyDataSetChanged()
-                            isProgressBar = false
-                        }
-                        for (i in 0..10) {
-                            if (dataList.size < 10) {
-                            dataList.addAll(dataList)
-                            runOnUiThread { adapter!!.notifyDataSetChanged() }
-                        }else {
-                                dataList.addAll(dataList)
-                            }
-                    }
-
-
-                    }.start()
-                }
-            }
-
-
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-
-            }
-        })*/
 
 
         binding.fab.setOnClickListener()
@@ -142,6 +87,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             startActivityForResult(intent, 555)
 
         }
+
 
         binding.refreshLayout.setOnRefreshListener()
         {
@@ -180,6 +126,24 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         })
     }
 
+
+
+    /*private fun loadToken(positon: Int) {
+        val call = ApiClientTwo.getApiClient().create(ApiInterface::class.java).deleteData()
+        call.enqueue(object : Callback<ResponseBody> {
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+            }
+
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                Log.d("==>loadToken", response.toString())
+                if (response.isSuccessful) {
+                    deleteRetrofitData(positon)
+                }
+            }
+
+        })
+    }*/
 
     private fun getRetrofitData() {
         binding.refreshLayout.isRefreshing = true
@@ -299,7 +263,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         if (item.itemId == android.R.id.home) {
             onBackPressed()
-            finish()
             return true
         } else {
             super.onOptionsItemSelected(item)
@@ -310,19 +273,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 555 && resultCode == 555) {
-            val intent =data!!.getParcelableExtra<StudentTable>("name")
-            val dataPosition = dataList.find { it!!.id == intent!!.id }
-            dataList.add(dataPosition)
+            val intent = data?.getParcelableExtra<StudentTable>("name")
+            val dataPosition = dataList.indexOfFirst { it!!.id == intent!!.id }
+            dataList[dataPosition] = intent
+            adapter!!.notifyItemChanged(dataPosition)
 
-            Log.d("==>",dataPosition!!.id.toString())
+        } else if (requestCode == 552 && resultCode == 552) {
+            val intent = data!!.getParcelableExtra<StudentTable>("name")
+            dataList.add(intent)
 
-            val positon = dataList.indexOf(dataPosition)
-            dataList.add(positon,intent)
-            adapter!!.notifyDataSetChanged()
-        }
-        else if (requestCode == 552 && resultCode == 552)
-        {
-            val intent =data?.data
+            adapter!!.notifyItemInserted(dataList.size - 1)
         }
     }
 

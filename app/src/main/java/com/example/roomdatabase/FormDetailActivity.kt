@@ -20,9 +20,7 @@ import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.StudentTable
 import com.example.roomdatabase.database.retrofit.ApiClient
 import com.example.roomdatabase.database.retrofit.ApiInterface
-import com.example.roomdatabase.databinding.ActivityFormDetailBinding
-import com.example.roomdatabase.databinding.DailogImagePickerBinding
-import com.example.roomdatabase.databinding.DailogProgressBinding
+import com.example.roomdatabase.databinding.*
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import retrofit2.Call
 import retrofit2.Callback
@@ -42,6 +40,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private var dataList = ArrayList<StudentTable>()
     private var photo: String? = null
     private lateinit var token: String
+    private lateinit var registration: String
     private var adapter: StudentListAdapter? = null
 
 
@@ -57,6 +56,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
         token = pref.getString("token", null).toString()
+
+        val pref1 = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
+        registration = pref.getString("registration", null).toString()
 
 
         val cal = Calendar.getInstance()
@@ -114,6 +116,13 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
             dialog.show()
         }
+
+        binding.btnAddreSubmit.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            startActivity(intent)
+        }
+
+
         binding.btnSubmit.setOnClickListener {
 
             /*val data = StudentTable(
@@ -134,7 +143,6 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                 else if (binding.rbFemale.isChecked) "Female" else null
             val date = binding.tvDatePicker.text.toString()
             val address = binding.etAddress.text.toString()
-
 
             if (name.isBlank()) {
                 messageShow("please enter your name")
@@ -157,6 +165,7 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
                         address = address,
                         image = it,
                         token = token
+
                     )
                     putRetrofitData(dataF, dataF.id)
                     Log.d("==>", "putRetrofitData ${dataF.id} ")
@@ -176,13 +185,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             .putData(data = data, id = id.toString())
         call.enqueue(object : Callback<StudentTable> {
             override fun onFailure(call: Call<StudentTable>, t: Throwable) {
-
             }
-
             override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
-
             }
-
         })
     }
 

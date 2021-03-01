@@ -33,13 +33,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
-    override fun getLayoutId() = R.layout.activity_form_detail
+
 
     private lateinit var studentData: StudentTable
     private var photo: String? = null
     private var tempFile: File? = null
     private lateinit var token: String
     private var adapter: StudentListAdapter? = null
+
+
+    override fun getLayoutId() = R.layout.activity_form_detail
 
     @SuppressLint("SimpleDateFormat")
     override fun initControl() {
@@ -50,6 +53,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
 
         val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
         token = pref.getString("token", null).toString()
+
 
 
         val cal = Calendar.getInstance()
@@ -168,21 +172,11 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                             address = address,
                             image = it,
                             token = token
+
                         )
                         initFirebaseDatabase()
-                        editRetrofitData(dataF,dataF.id)
+                        editRetrofitData(dataF, dataF.id)
 
-                        /*
-                        databaseReference.child(dataF.id.toString()).setValue(dataF)
-                            .addOnCompleteListener {
-                                progressDialog.dismiss()
-                                finish()
-                            }.addOnFailureListener {
-                                progressBinding.progressBar.visibility = View.GONE
-                                progressBinding.btnOk.visibility = View.VISIBLE
-                                progressBinding.tvError.text = it.localizedMessage
-                                messageShow(it.localizedMessage)
-                            }*/
                     }
 
                 } else {
@@ -195,19 +189,8 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                         address = address,
                         image = studentData.image,
                         token = token
-
                     )
-                    editRetrofitData(dataF,dataF.id)
-                   /* databaseReference.child(dataF.id.toString()).setValue(dataF)
-                        .addOnCompleteListener {
-                            progressDialog.dismiss()
-                            finish()
-                        }.addOnFailureListener {
-                            progressBinding.progressBar.visibility = View.GONE
-                            progressBinding.btnOk.visibility = View.VISIBLE
-                            progressBinding.tvError.text = it.localizedMessage
-                            messageShow(it.localizedMessage)
-                        }*/
+                    editRetrofitData(dataF, dataF.id)
                 }
                 setResult(Activity.RESULT_OK, intent)
                 finish()
@@ -232,12 +215,13 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                 progressBinding.btnOk.visibility = View.VISIBLE
                 progressBinding.tvError.text = t.localizedMessage
             }
+
             override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
                 progressDialog.dismiss()
                 val intent = Intent()
-                intent.putExtra("data",response.body().toString())
+                intent.putExtra("data", response.body().toString())
                 setResult(555, intent)
-                adapter?.notifyItemChanged(id.toInt())
+                adapter?.notifyItemInserted(id.toInt())
             }
 
         })

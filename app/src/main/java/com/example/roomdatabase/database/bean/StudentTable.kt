@@ -13,5 +13,7 @@ data class StudentTable(
     @SerializedName("address") val address:String,
     @SerializedName("image") val image:String,
     @SerializedName("token") val token:String
+  /*  @SerializedName("latitude") val latitude : Float,
+    @SerializedName("longitude") val longitude : Float*/
 
     ): Parcelable

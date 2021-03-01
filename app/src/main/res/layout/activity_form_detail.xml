@@ -27,17 +27,6 @@
                 android:orientation="vertical"
                 tools:context=".FormDetailActivity">
 
-                <!--<androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="20dp"
-                    android:gravity="center"
-                    android:text="School Form"
-                    android:textColor="@color/black"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />-->
-
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/ivUserImage"
                     android:layout_width="100dp"
@@ -202,6 +191,17 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
+
+                <Button
+                    android:id="@+id/btnAddreSubmit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="24dp"
+                    android:background="@drawable/bg_btn"
+                    android:text="@string/address"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btnSubmit"
