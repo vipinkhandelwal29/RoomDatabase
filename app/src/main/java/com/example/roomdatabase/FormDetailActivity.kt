@@ -13,8 +13,10 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.View.GONE
 import android.view.inputmethod.InputMethodManager
 import androidx.core.app.ActivityCompat
+import androidx.core.view.isInvisible
 import com.bumptech.glide.Glide
 import com.example.roomdatabase.database.adapter.StudentListAdapter
 import com.example.roomdatabase.database.bean.StudentTable
@@ -42,6 +44,9 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
     private lateinit var token: String
     private lateinit var registration: String
     private var adapter: StudentListAdapter? = null
+    private var latitude: Double? = null
+    private var longitude: Double? = null
+    private var flatNo: String? = null
 
 
     override fun getLayoutId() = R.layout.activity_form_detail
@@ -49,16 +54,17 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
     @SuppressLint("SimpleDateFormat", "SetTextI18n")
     override fun initControl() {
-
+        binding.lbAddress.visibility = View.GONE
+        binding.etAddress.visibility = View.GONE
+        binding.btnAddreSubmit.text = "Add Location"
 
         setSupportActionBar(binding.iToolbar.toolbar)
         setTitle("Add New Student")
 
+        checkConnectivity()
+
         val pref = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
         token = pref.getString("token", null).toString()
-
-        val pref1 = getSharedPreferences("MyPref", Context.MODE_PRIVATE)
-        registration = pref.getString("registration", null).toString()
 
 
         val cal = Calendar.getInstance()
@@ -119,23 +125,12 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
 
         binding.btnAddreSubmit.setOnClickListener {
             val intent = Intent(this, MapActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, 500)
         }
 
 
         binding.btnSubmit.setOnClickListener {
 
-            /*val data = StudentTable(
-                id = System.currentTimeMillis(),
-                name = "Vipin",
-                gender = "male",
-                dob = cal.timeInMillis,
-                address = "address",
-                image = "null",
-                token = token
-            )
-            putRetrofitData(data, data.id)
-            Log.d("==>", "initControl: ${data}")*/
 
             val name = binding.etName.text.toString()
             val gender =
@@ -153,40 +148,64 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             } else if (date.isBlank()) {
                 messageShow("please enter your date")
             } else {
+                val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+                val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+                progressDialog.setContentView(progressBinding.root)
+                progressDialog.show()
+                progressBinding.btnOk.setOnClickListener {
+                    progressDialog.dismiss()
+                }
+
                 initFirebaseStorage()
                 uploadImage(callImage = {
                     initFirebaseDatabase()
-
+                    checkConnectivity()
                     val dataF = StudentTable(
                         id = System.currentTimeMillis(),
                         name = name,
                         gender = gender,
                         dob = cal.timeInMillis,
-                        address = address,
+                        address = flatNo!!,
                         image = it,
-                        token = token
+                        token = token,
+                        longitude = longitude!!,
+                        latitude = latitude!!
 
                     )
                     putRetrofitData(dataF, dataF.id)
                     Log.d("==>", "putRetrofitData ${dataF.id} ")
+                    progressDialog.dismiss()
+
                 })
-
-                setResult(Activity.RESULT_OK, intent)
-                finish()
             }
-
         }
-
     }
 
 
     private fun putRetrofitData(data: StudentTable, id: Long) {
+        val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
+        val progressBinding = DailogProgressBinding.inflate(layoutInflater)
+        progressDialog.setContentView(progressBinding.root)
+        progressDialog.show()
+        progressBinding.btnOk.setOnClickListener {
+            progressDialog.dismiss()
+        }
         val call = ApiClient.getApiClient().create(ApiInterface::class.java)
             .putData(data = data, id = id.toString())
         call.enqueue(object : Callback<StudentTable> {
             override fun onFailure(call: Call<StudentTable>, t: Throwable) {
+                progressBinding.progressBar.visibility = View.GONE
+                progressBinding.btnOk.visibility = View.VISIBLE
+                progressBinding.tvError.text = "Check Connectivity"
             }
+
             override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
+                progressBinding.tvError.text = "under process wait for a while "
+                progressDialog.dismiss()
+                val intent = Intent()
+                intent.putExtra("positionData", response.body())
+                setResult(107, intent)
+                finish()
             }
         })
     }
@@ -270,6 +289,25 @@ class FormDetailActivity() : BaseActivity<ActivityFormDetailBinding>(), View.OnC
             }
             this.tempFile = tempFile
             Glide.with(this).load(tempFile).circleCrop().into(binding.ivUserImage)
+        } else if (requestCode == 500 && resultCode == 500) {
+
+            if (requestCode == 500 && resultCode == 500) {
+                flatNo = data!!.getStringExtra("flatno")
+                latitude = data.getDoubleExtra("latitude", 0.0)
+                longitude = data.getDoubleExtra("longitude", 0.0)
+                if (flatNo == null) {
+                    binding.lbAddress.visibility = View.GONE
+                    binding.etAddress.visibility = View.GONE
+
+                } else {
+
+                    binding.lbAddress.visibility = View.VISIBLE
+                    binding.etAddress.visibility = View.VISIBLE
+                    binding.etAddress.setText(flatNo)
+                    binding.btnAddreSubmit.text = "Update Location"
+                }
+            }
+
         }
     }
 

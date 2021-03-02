@@ -49,6 +49,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
         initFirebaseDatabase()
         setFirebaseEvent()
+        checkConnectivity()
         //getRetrofitData()
 
 
@@ -67,7 +68,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         adapter = StudentListAdapter(dataList, callEdit = { position ->
             val intent = Intent(this, EditFormAcivity::class.java)
             intent.putExtra("data", dataList[position])
-            startActivity(intent)
+            startActivityForResult(intent,555)
         }, callDelete = { position ->
             deleteRetrofitData(position)
 
@@ -84,7 +85,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         {
             //notificationClass()
             val intent = Intent(this, FormDetailActivity::class.java)
-            startActivityForResult(intent, 555)
+            startActivityForResult(intent, 107)
 
         }
 
@@ -127,24 +128,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
 
-
-    /*private fun loadToken(positon: Int) {
-        val call = ApiClientTwo.getApiClient().create(ApiInterface::class.java).deleteData()
-        call.enqueue(object : Callback<ResponseBody> {
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-
-            }
-
-            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                Log.d("==>loadToken", response.toString())
-                if (response.isSuccessful) {
-                    deleteRetrofitData(positon)
-                }
-            }
-
-        })
-    }*/
-
     private fun getRetrofitData() {
         binding.refreshLayout.isRefreshing = true
         dataList.clear()
@@ -183,32 +166,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
 
-    /* private fun getFirebaseData() {
-         binding.refreshLayout.isRefreshing = true
-         databaseReference.get().addOnCompleteListener {
-             val result = it.result
-             // if (result!=null && result.childrenCount > 0){
-             dataList.clear()
-             result!!.children.forEach {
-                 //Log.d("==>", "msg ${it.child("name").value}")
-                 dataList.add(
-                     StudentTable(
-                         id = it.child("id").value.toString().toLong(),
-                         name = it.child("name").value.toString(),
-                         address = it.child("address").value.toString(),
-                         image = it.child("image").value.toString(),
-                         dob = it.child("dob").value.toString().toLong(),
-                         gender = it.child("gender").value.toString(),
-                         token = it.child("token").value.toString()
-
-                     )
-                 )
-             }
-             setFirebaseEvent()
-             adapter!!.notifyDataSetChanged()
-         }
-         binding.refreshLayout.isRefreshing = false
-     }*/
 
     private fun setFirebaseEvent() {
         databaseReference.addChildEventListener(object : ChildEventListener {
@@ -243,10 +200,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
                     database.sampleDao().search().filter {
                         //it.name.toUpperCase().contains((newText ?: " "))
                         it.name.toLowerCase(Locale.ROOT).contains((newText ?: ""))
-                        // it.date >= calendar.timeInMillis
+
                     }
                     dataList.clear()
-                    // dataList.addAll(result)
                     adapter!!.notifyDataSetChanged()
                     return true
                 }
@@ -273,15 +229,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 555 && resultCode == 555) {
-            val intent = data?.getParcelableExtra<StudentTable>("name")
+            val intent = data!!.getParcelableExtra<StudentTable>("data")
             val dataPosition = dataList.indexOfFirst { it!!.id == intent!!.id }
             dataList[dataPosition] = intent
             adapter!!.notifyItemChanged(dataPosition)
 
-        } else if (requestCode == 552 && resultCode == 552) {
-            val intent = data!!.getParcelableExtra<StudentTable>("name")
-            dataList.add(intent)
-
+        } else if (requestCode == 107 && resultCode == 107) {
+            val addData = data!!.getParcelableExtra<StudentTable>("positionData")
+            dataList.add(addData)
             adapter!!.notifyItemInserted(dataList.size - 1)
         }
     }

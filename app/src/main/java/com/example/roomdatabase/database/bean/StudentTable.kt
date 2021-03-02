@@ -12,8 +12,8 @@ data class StudentTable(
     @SerializedName("dob") val dob:Long,
     @SerializedName("address") val address:String,
     @SerializedName("image") val image:String,
-    @SerializedName("token") val token:String
-  /*  @SerializedName("latitude") val latitude : Float,
-    @SerializedName("longitude") val longitude : Float*/
+    @SerializedName("token") val token:String,
+    @SerializedName("latitude") val latitude : Double ,
+    @SerializedName("longitude") val longitude : Double
 
     ): Parcelable

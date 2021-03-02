@@ -1,10 +1,14 @@
 package com.example.roomdatabase
 
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
@@ -36,6 +40,36 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         databaseReference = FirebaseDatabase.getInstance().getReference("student")
     }
 
+
+    protected fun checkConnectivity() {
+        val manager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = manager.activeNetworkInfo
+
+        if (null == activeNetwork) {
+            val dialogBuilder = AlertDialog.Builder(this)
+            val intent = Intent(this, MainActivity::class.java)
+// set message of alert dialog
+            dialogBuilder.setMessage("Make sure that WI-FI or mobile data is turned on, then try again")
+// if the dialog is cancelable
+                .setCancelable(false)
+// positive button text and action
+                .setPositiveButton("Retry", DialogInterface.OnClickListener { dialog, id ->
+                    recreate()
+                })
+// negative button text and action
+                .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, id ->
+                    finish()
+                })
+
+// create dialog box
+            val alert = dialogBuilder.create()
+// set title for alert dialog box
+            alert.setTitle("No Internet Connection")
+            alert.setIcon(R.mipmap.ic_launcher)
+// show alert dialog
+            alert.show()
+        }
+    }
     protected lateinit var storageReference: StorageReference
     protected fun initFirebaseStorage() {
         storageReference = FirebaseStorage.getInstance()
@@ -53,7 +87,8 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         dialog.show()
     }
 
-    
+
+
 
     /*protected fun closeKeyBoard() {
 
@@ -69,6 +104,7 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         }
         return super.dispatchTouchEvent(ev)
     }
+
 
 
 

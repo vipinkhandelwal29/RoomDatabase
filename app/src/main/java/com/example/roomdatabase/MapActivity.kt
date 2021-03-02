@@ -1,47 +1,55 @@
 package com.example.roomdatabase
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Point
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.util.Log
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.example.roomdatabase.R.layout.activity_map
 import com.example.roomdatabase.databinding.ActivityMapBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.*
+import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.android.synthetic.main.activity_map.*
 import java.util.*
 
-class MapActivity : BaseActivity<ActivityMapBinding>(), OnMapReadyCallback {
+
+class MapActivity : BaseActivity<ActivityMapBinding>(), OnMapReadyCallback{
 
     override fun getLayoutId() = activity_map
 
     private lateinit var currentLocation: Location
+    private var mMap: GoogleMap? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val permissionCode = 101
-    private lateinit var mMap: GoogleMap
 
     override fun initControl() {
 
+        setSupportActionBar(binding.iToolbar.toolbar)
+        setTitle("Select Location")
+        checkConnectivity()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         fetchLocation()
 
+
+
+
+
     }
 
-    /* override fun onMapReady(googleMap: GoogleMap?) {
 
-         if (googleMap != null) {
-             mMap = googleMap
-         }
-     }*/
     private fun fetchLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION
@@ -68,7 +76,7 @@ class MapActivity : BaseActivity<ActivityMapBinding>(), OnMapReadyCallback {
 
 
                 val geocoder: Geocoder
-                var addresses: List<Address?>
+                val addresses: List<Address?>
                 geocoder = Geocoder(this, Locale.getDefault())
                 addresses = geocoder.getFromLocation(
                     currentLocation.latitude,
@@ -86,6 +94,26 @@ class MapActivity : BaseActivity<ActivityMapBinding>(), OnMapReadyCallback {
                 val knownName = addresses[0]!!.featureName
 
                 binding.etMap.text = address
+
+                binding.btnSubmit.setOnClickListener {
+                    val intent = Intent()
+                    val flatno = binding.etHouse.text.toString()
+                    if (flatno.isBlank()) {
+                        messageShow("please enter House No./Flat")
+                    }else
+                    {
+                        intent.putExtra("latitude", currentLocation.latitude)
+                        intent.putExtra("longitude", currentLocation.longitude)
+                        intent.putExtra("flatno", "$flatno ,$address")
+
+                        Log.d("==>", "fetchLocation: $flatno,$address")
+                        Log.d("==>latitude", "${currentLocation.latitude}")
+                        Log.d("==>latitude", "${currentLocation.longitude}")
+                        setResult(500, intent)
+                        finish()
+                    }
+                }
+
                 val supportMapFragment = (supportFragmentManager.findFragmentById(R.id.map) as
                         SupportMapFragment?)!!
                 supportMapFragment.getMapAsync(this)
@@ -94,11 +122,38 @@ class MapActivity : BaseActivity<ActivityMapBinding>(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
+
+        /*if (isPermissionGiven()){
+            googleMap?.isMyLocationEnabled = true
+            googleMap?.uiSettings.isMyLocationButtonEnabled = true
+            googleMap?.uiSettings.isZoomControlsEnabled = true
+            getCurrentLocation()
+        } else {
+            givePermission()
+        }
+        googleMap?.setOnMarkerDragListener(this)*/
         val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
         val markerOptions = MarkerOptions().position(latLng).title("Vipin is here!")
         googleMap?.animateCamera(CameraUpdateFactory.newLatLng(latLng))
         googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
         googleMap?.addMarker(markerOptions)
+        val sydney = LatLng(-33.852, 151.211)
+
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+
+        if (id == android.R.id.home) {
+            onBackPressed()
+            return true
+            /*  Toast.makeText(this, "ActionClicked", Toast.LENGTH_LONG).show()
+              Log.d("btn", "menuBtnAdd  ")*/
+        } else {
+
+            return super.onOptionsItemSelected(item)
+        }
     }
 
 }

@@ -40,6 +40,10 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
     private var tempFile: File? = null
     private lateinit var token: String
     private var adapter: StudentListAdapter? = null
+    private var flatNo: String? = null
+    private var latitude: Double? = null
+    private var longitude: Double? = null
+    private  var position: Int?= null
 
 
     override fun getLayoutId() = R.layout.activity_form_detail
@@ -47,7 +51,7 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
     @SuppressLint("SimpleDateFormat")
     override fun initControl() {
 
-
+        checkConnectivity()
         setSupportActionBar(binding.iToolbar.toolbar)
         title = "Student Update"
 
@@ -55,11 +59,10 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
         token = pref.getString("token", null).toString()
 
 
-
         val cal = Calendar.getInstance()
 
         studentData = intent.getParcelableExtra("data")!!
-
+        position = intent.getIntExtra("data",0)
         binding.etName.setText(studentData.name)
         binding.etAddress.setText(studentData.address)
         binding.tvDatePicker.text = studentData.dob.toString()
@@ -130,18 +133,13 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
             dialog.show()
         }
 
-        /* fun View.hideKeyboard(inputMethodManager: InputMethodManager) {
-             inputMethodManager.hideSoftInputFromWindow(windowToken, 0)
-         }*/
+        binding.btnAddreSubmit.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            startActivityForResult(intent, 500)
+        }
 
         binding.btnSubmit.setOnClickListener {
-            val progressDialog = BottomSheetDialog(this, R.style.NoWiredStrapInNavigationBar)
-            val progressBinding = DailogProgressBinding.inflate(layoutInflater)
-            progressDialog.setContentView(progressBinding.root)
-            progressDialog.show()
-            progressBinding.btnOk.setOnClickListener {
-                progressDialog.dismiss()
-            }
+
             //closeKeyBoard()
 
             val name = binding.etName.text.toString()
@@ -169,11 +167,15 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                             name = name,
                             gender = gender,
                             dob = cal.timeInMillis,
-                            address = address,
+                            address = flatNo!!,
                             image = it,
-                            token = token
+                            token = token,
+                            latitude = latitude!!,
+                            longitude = longitude!!
 
                         )
+
+                        Log.d("==>", "initControl: $dataF")
                         initFirebaseDatabase()
                         editRetrofitData(dataF, dataF.id)
 
@@ -188,12 +190,13 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
                         dob = cal.timeInMillis,
                         address = address,
                         image = studentData.image,
-                        token = token
+                        token = token,
+                        latitude = studentData.latitude,
+                        longitude = studentData.longitude
                     )
                     editRetrofitData(dataF, dataF.id)
+
                 }
-                setResult(Activity.RESULT_OK, intent)
-                finish()
             }
         }
     }
@@ -218,14 +221,17 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
 
             override fun onResponse(call: Call<StudentTable>, response: Response<StudentTable>) {
                 progressDialog.dismiss()
-                val intent = Intent()
-                intent.putExtra("data", response.body().toString())
-                setResult(555, intent)
-                adapter?.notifyItemInserted(id.toInt())
+                if (response.isSuccessful) {
+                    val intent = Intent()
+                    intent.putExtra("data", response.body())
+                    setResult(555, intent)
+                    finish()
+                }
             }
 
         })
     }
+
 
 
     private fun uploadImage(callImage: (Image: String) -> Unit) {
@@ -304,6 +310,11 @@ class EditFormAcivity : BaseActivity<ActivityFormDetailBinding>() {
             }
             this.tempFile = tempFile
             Glide.with(this).load(tempFile).circleCrop().into(binding.ivUserImage)
+        } else if (requestCode == 500 && resultCode == 500) {
+            flatNo = data!!.getStringExtra("flatno")
+            latitude = data.getDoubleExtra("latitude", 0.0)
+            longitude = data.getDoubleExtra("longitude", 0.0)
+            binding.etAddress.setText(flatNo)
         }
     }
 
