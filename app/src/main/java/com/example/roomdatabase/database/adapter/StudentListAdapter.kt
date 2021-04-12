@@ -71,7 +71,7 @@ class StudentListAdapter(
     class StudentListHolder(val itemCellBinding: RecyclerviewItemBinding) :
         RecyclerView.ViewHolder(itemCellBinding.root)
 
-    class ProgressViewHolder(val itemProgressBarBinding: ProgressBarBinding) :
+    class ProgressViewHolder(private val itemProgressBarBinding: ProgressBarBinding) :
         RecyclerView.ViewHolder(itemProgressBarBinding.root)
 
 }
